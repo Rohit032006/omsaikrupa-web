@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-200: #fed7aa;
+  --color-brand-300: #fdba74;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #f97316;
+  --color-brand-600: #ea580c;
+  --color-brand-700: #c2410c;
+  --color-brand-800: #9a3412;
+  --color-brand-900: #7c2d12;
+  --color-brand-950: #431407;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Seat selection styles */
+.seat {
+  @apply w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer transition-all duration-200 select-none border-2;
+}
+.seat-available {
+  @apply bg-green-50 border-green-400 text-green-700 hover:bg-green-100 hover:scale-110 hover:shadow-md;
+}
+.seat-selected {
+  @apply bg-blue-500 border-blue-600 text-white scale-105 shadow-lg;
+}
+.seat-booked {
+  @apply bg-red-100 border-red-400 text-red-500 cursor-not-allowed opacity-80;
+}
+.seat-reserved {
+  @apply bg-orange-100 border-orange-400 text-orange-600 cursor-not-allowed;
+}
+.seat-unavailable {
+  @apply bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed;
+}
+.seat-driver {
+  @apply w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold bg-gray-700 text-white border-2 border-gray-500;
+}
+
+/* Status badges */
+.badge {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+.badge-success { @apply bg-green-100 text-green-800; }
+.badge-warning { @apply bg-yellow-100 text-yellow-800; }
+.badge-danger { @apply bg-red-100 text-red-800; }
+.badge-info { @apply bg-blue-100 text-blue-800; }
+.badge-gray { @apply bg-gray-100 text-gray-700; }
+.badge-orange { @apply bg-orange-100 text-orange-800; }
+
+/* Admin sidebar */
+.sidebar-link {
+  @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-150;
+}
+.sidebar-link-active {
+  @apply bg-brand-600 text-white shadow-sm;
+}
+.sidebar-link-inactive {
+  @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900;
+}
+
+/* Card */
+.card {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { @apply bg-gray-100; }
+::-webkit-scrollbar-thumb { @apply bg-gray-300 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
+
+/* Animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fadeInUp 0.3s ease-out; }

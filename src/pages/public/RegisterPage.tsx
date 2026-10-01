@@ -61,9 +61,6 @@ const RegisterPage = () => {
   const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
   const strengthColors = ['', 'bg-red-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'];
 
-  const searchParams = new URLSearchParams(window.location.search);
-  const redirect = searchParams.get('redirect');
-
   const onSubmit = async (data: RegisterForm) => {
     try {
       const user = await registerUser({
@@ -73,11 +70,7 @@ const RegisterPage = () => {
         password: data.password,
       });
       toast.success(`Account created! Welcome, ${user.name}! 🎉`);
-      if (redirect) {
-        navigate(redirect);
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     } catch (error: any) {
       const msg = error?.response?.data?.error || 'Registration failed. Try again.';
       toast.error(msg);

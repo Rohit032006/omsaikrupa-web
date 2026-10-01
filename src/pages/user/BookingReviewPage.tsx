@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, MapPin, Users, Info, ShieldCheck, Edit2, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useBookingStore } from '../../store/bookingStore';
-import { useAuthStore } from '../../store/authStore';
 import { bookingApi } from '../../services/api';
 
 export const BookingReviewPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
   const { 
     travelDate, 
     pickupTime, 
@@ -54,12 +52,6 @@ export const BookingReviewPage: React.FC = () => {
   };
 
   const handleProceedToPayment = async () => {
-    if (!isAuthenticated) {
-      toast('बुकिंग पुढे नेण्यासाठी कृपया लॉगिन करा किंवा अकाऊंट बनवा', { icon: '🔐' });
-      navigate('/login?redirect=/book/review');
-      return;
-    }
-
     try {
       setIsSubmitting(true);
       

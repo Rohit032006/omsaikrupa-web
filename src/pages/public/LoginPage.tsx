@@ -31,17 +31,12 @@ const LoginPage = () => {
     resolver: zodResolver(loginSchema),
   });
 
-  const searchParams = new URLSearchParams(window.location.search);
-  const redirect = searchParams.get('redirect');
-
   const onSubmit = async (data: LoginForm) => {
     try {
       const user = await login(data.emailOrMobile, data.password);
       toast.success(`Welcome, ${user.name}!`);
       if (user.role === 'ADMIN') {
         navigate('/admin');
-      } else if (redirect) {
-        navigate(redirect);
       } else {
         navigate('/dashboard');
       }
@@ -186,7 +181,7 @@ const LoginPage = () => {
 
           {/* Register Link */}
           <Link
-            to={redirect ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'}
+            to="/register"
             className="w-full flex justify-center items-center py-3 px-4 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-orange-300 focus:outline-none transition-all"
           >
             Create New Account

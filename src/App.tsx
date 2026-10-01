@@ -98,27 +98,11 @@ function App() {
             <Route path="/notifications" element={<NotificationsPage />} />
           </Route>
 
-          {/* Booking Flow - outside UserLayout for full-screen experience */}
-          <Route path="/search-vehicles" element={
-            <ProtectedRoute>
-              <SearchVehiclesPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/book/seats" element={
-            <ProtectedRoute>
-              <SeatSelectionPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/book/passengers" element={
-            <ProtectedRoute>
-              <PassengerDetailsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/book/review" element={
-            <ProtectedRoute>
-              <BookingReviewPage />
-            </ProtectedRoute>
-          } />
+          {/* Booking Flow - accessible without forcing premature login */}
+          <Route path="/search-vehicles" element={<SearchVehiclesPage />} />
+          <Route path="/book/seats" element={<SeatSelectionPage />} />
+          <Route path="/book/passengers" element={<PassengerDetailsPage />} />
+          <Route path="/book/review" element={<BookingReviewPage />} />
           <Route path="/book/payment/:bookingId" element={
             <ProtectedRoute>
               <PaymentPage />

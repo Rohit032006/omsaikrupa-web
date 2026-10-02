@@ -6,29 +6,28 @@ import {
   ThumbsUp, Star, Plane, Sparkles, ArrowRight
 } from 'lucide-react';
 import { VehicleIcon } from '../../components/VehicleIcon';
+import { useBookingStore } from '../../store/bookingStore';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  // const setBookingSearch = useBookingStore(state => state.setBookingSearch);
-  const [activeTab, setActiveTab] = useState<'airport-pickup' | 'airport-drop' | 'local' | 'outstation'>('airport-pickup');
+  const setSearchParams = useBookingStore(state => state.setSearchParams);
   const [pickup, setPickup] = useState('');
   const [drop, setDrop] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [passengers, setPassengers] = useState('2');
+  const [passengers, setPassengers] = useState('1');
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // setBookingSearch({ type: activeTab, pickup, drop, date, time, passengers });
+    setSearchParams({
+      pickup: pickup || 'Pune',
+      drop: drop || 'Mumbai',
+      travelDate: date || new Date().toISOString().split('T')[0],
+      pickupTime: time || '09:00 AM',
+      passengers: Number(passengers) || 1
+    });
     navigate('/search-vehicles');
   };
-
-  const tabs = [
-    { id: 'airport-pickup', label: 'Airport Pickup' },
-    { id: 'airport-drop', label: 'Airport Drop' },
-    { id: 'local', label: 'Local Trip' },
-    { id: 'outstation', label: 'Outstation' }
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -39,7 +38,7 @@ const HomePage: React.FC = () => {
             Book Your Ride with Om Sai Travels
           </h1>
           <p className="text-xl sm:text-2xl font-medium text-orange-100 mb-12">
-            Safe, comfortable and reliable vehicle booking for airport transfers and travel
+            Safe, comfortable and reliable vehicle booking for all your journeys
           </p>
         </div>
       </section>
@@ -47,21 +46,6 @@ const HomePage: React.FC = () => {
       {/* Booking Search Card overlapping hero */}
       <section className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 mb-16">
         <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
-          <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-4">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  activeTab === tab.id 
-                    ? 'bg-orange-100 text-orange-700' 
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
 
           <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="relative">
@@ -73,7 +57,7 @@ const HomePage: React.FC = () => {
                   value={pickup}
                   onChange={e => setPickup(e.target.value)}
                   className="pl-10 w-full rounded-lg border border-gray-300 py-2.5 px-3 focus:ring-orange-500 focus:border-orange-500" 
-                  placeholder="City, Airport, etc."
+                  placeholder="Pickup City / Area"
                   required
                 />
               </div>

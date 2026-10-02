@@ -29,6 +29,7 @@ export default api;
 export const authApi = {
   sendOtp: (data: { email?: string; mobile?: string; name?: string }) => api.post('/auth/send-otp', data),
   verifyOtp: (data: { email?: string; mobile?: string; otp: string; name?: string }) => api.post('/auth/verify-otp', data),
+  googleLogin: (data: { email?: string; name?: string; avatar?: string }) => api.post('/auth/google', data),
   register: (data: any) => api.post('/auth/register', data),
   login: (data: any) => api.post('/auth/login', data),
   me: () => api.get('/auth/me'),

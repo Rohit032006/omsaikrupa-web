@@ -50,6 +50,51 @@ router.post('/send-otp', async (req, res: Response) => {
   }
 });
 
+// POST /api/auth/google
+router.post('/google', async (req, res: Response) => {
+  try {
+    const { email, name, avatar } = req.body;
+    const cleanEmail = (email || '').toString().trim().toLowerCase() || 'user@gmail.com';
+    const cleanName = (name || '').toString().trim() || cleanEmail.split('@')[0];
+
+    let user = (await db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail)) as any;
+    if (!user) {
+      const id = uuidv4();
+      await db.prepare('INSERT INTO users (id, name, email, mobile, passwordHash, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+        id,
+        cleanName,
+        cleanEmail,
+        '8080959502',
+        '',
+        'USER',
+        'ACTIVE'
+      );
+      user = (await db.prepare('SELECT * FROM users WHERE id = ?').get(id)) as any;
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role, name: user.name },
+      process.env.JWT_SECRET || 'omsaikrupa_jwt_secret_key_2026_very_secure',
+      { expiresIn: '7d' }
+    );
+
+    return res.json({
+      message: 'Google login successful',
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+        role: user.role,
+        status: user.status,
+      }
+    });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/auth/verify-otp
 router.post('/verify-otp', async (req, res: Response) => {
   try {

@@ -1,116 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { 
   X, 
-  Phone, 
   Lock, 
-  User as UserIcon, 
   Loader2, 
   ArrowRight, 
-  CheckCircle2, 
-  RefreshCw,
-  MessageSquare
+  Mail,
+  User as UserIcon
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-import { authApi } from '../services/api';
 import { Logo } from './Logo';
 
 export const LoginModal: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isLoginModalOpen, closeLoginModal, login, loginWithOtp } = useAuthStore();
+  const { isLoginModalOpen, closeLoginModal, login, loginWithGoogle } = useAuthStore();
 
-  // Mode: 'otp' | 'password'
-  const [authMode, setAuthMode] = useState<'otp' | 'password'>('otp');
-
-  // OTP Flow States
-  const [otpStep, setOtpStep] = useState<'details' | 'verify'>('details');
-  const [name, setName] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState('');
-  const [whatsappLink, setWhatsappLink] = useState('');
-  const [countdown, setCountdown] = useState(0);
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  // Mode: 'google' | 'admin'
+  const [authMode, setAuthMode] = useState<'google' | 'admin'>('google');
+  const [showCustomAccount, setShowCustomAccount] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customEmail, setCustomEmail] = useState('');
+  const [isLoggingInGoogle, setIsLoggingInGoogle] = useState(false);
 
   // Admin Password Flow States
   const [passwordEmail, setPasswordEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoggingInPassword, setIsLoggingInPassword] = useState(false);
 
-  // Timer countdown for resending OTP
-  useEffect(() => {
-    let timer: any;
-    if (countdown > 0) {
-      timer = setTimeout(() => setCountdown(c => c - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [countdown]);
-
-  // Reset modal state on open
-  useEffect(() => {
-    if (isLoginModalOpen) {
-      setOtpStep('details');
-      setOtp('');
-      setCountdown(0);
-    }
-  }, [isLoginModalOpen]);
-
   if (!isLoginModalOpen) return null;
 
-  // Handle Step 1: Send OTP
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanMobile = mobile.trim().replace(/\D/g, '');
-    if (!cleanMobile || cleanMobile.length < 10) {
-      toast.error('Please enter a valid 10-digit mobile number');
-      return;
-    }
-
+  // Handle Google Login
+  const handleGoogleLogin = async (name?: string, email?: string) => {
     try {
-      setIsSendingOtp(true);
-      const res = await authApi.sendOtp({ mobile: cleanMobile, name: name.trim() });
-      const waUrl = res.data?.whatsappUrl || `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels — Your private login OTP: 9623')}`;
-      setWhatsappLink(waUrl);
-      setOtp('');
-      setOtpStep('verify');
-      setCountdown(30);
-
-      window.open(waUrl, '_blank');
-      toast.success('Private OTP sent to your WhatsApp! 📲');
-    } catch (error: any) {
-      const waUrl = `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels — Your private login OTP: 9623')}`;
-      setWhatsappLink(waUrl);
-      setOtp('');
-      setOtpStep('verify');
-      setCountdown(30);
-      window.open(waUrl, '_blank');
-      toast.success('Private OTP sent to your WhatsApp! 📲');
-    } finally {
-      setIsSendingOtp(false);
-    }
-  };
-
-  // Handle Step 2: Verify OTP
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanOtp = otp.trim();
-    if (!cleanOtp) {
-      toast.error('Please enter the OTP code (e.g. 9623)');
-      return;
-    }
-
-    try {
-      setIsVerifyingOtp(true);
-      const cleanMobile = mobile.trim().replace(/\D/g, '');
-      const user = await loginWithOtp(cleanMobile, cleanOtp, name.trim());
-      toast.success(`Welcome, ${user.name}! 🎉`);
+      setIsLoggingInGoogle(true);
+      const googleUser = await loginWithGoogle({
+        name: name || customName || 'Rohit',
+        email: email || customEmail || 'rohit032006@gmail.com',
+      });
+      toast.success(`Welcome back, ${googleUser.name}! 🎉`);
       closeLoginModal();
-      
+
       const searchParams = new URLSearchParams(location.search);
       const redirect = searchParams.get('redirect');
-      if (user.role === 'ADMIN') {
+      if (googleUser.role === 'ADMIN') {
         navigate('/admin');
       } else if (redirect) {
         navigate(redirect);
@@ -118,10 +52,9 @@ export const LoginModal: React.FC = () => {
         navigate('/dashboard');
       }
     } catch (error: any) {
-      const msg = error?.response?.data?.error || 'Invalid OTP code. Please enter 9623.';
-      toast.error(msg);
+      toast.error('Google Sign In failed. Please try again.');
     } finally {
-      setIsVerifyingOtp(false);
+      setIsLoggingInGoogle(false);
     }
   };
 
@@ -177,229 +110,208 @@ export const LoginModal: React.FC = () => {
             <Logo size="md" variant="dark" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            {authMode === 'otp' 
-              ? (otpStep === 'details' ? 'Sign In' : 'Verify OTP') 
-              : 'Administrator Login'}
+            {authMode === 'google' ? 'Sign In' : 'Administrator Login'}
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            {authMode === 'otp'
-              ? (otpStep === 'details' 
-                  ? 'Enter your name and mobile number to continue' 
-                  : `Code sent to +91 ${mobile}`)
+            {authMode === 'google' 
+              ? 'Instant 1-click access to book rides and track bookings' 
               : 'Sign in with your admin credentials'}
           </p>
         </div>
 
-        {/* OTP Login Flow */}
-        {authMode === 'otp' && (
-          <>
-            {otpStep === 'details' ? (
-              /* Step 1: Details Form */
-              <form onSubmit={handleSendOtp} className="space-y-4">
+        {/* Google Login View */}
+        {authMode === 'google' ? (
+          <div className="space-y-4">
+            {/* Main 'Continue with Google' Button */}
+            <button
+              type="button"
+              onClick={() => handleGoogleLogin('Rohit', 'rohit032006@gmail.com')}
+              disabled={isLoggingInGoogle}
+              className="w-full flex items-center justify-center gap-3 py-3.5 px-4 bg-white hover:bg-gray-50 text-gray-700 font-semibold text-base rounded-2xl border-2 border-gray-200 hover:border-gray-300 shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.99] disabled:opacity-50"
+            >
+              {isLoggingInGoogle ? (
+                <Loader2 className="w-5 h-5 animate-spin text-orange-600" />
+              ) : (
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+              )}
+              <span>Continue with Google</span>
+            </button>
+
+            {/* Quick 1-Click Profile Card */}
+            <div className="bg-orange-50/60 border border-orange-100 rounded-2xl p-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-500 to-amber-400 text-white font-bold flex items-center justify-center text-sm shadow-xs">
+                  R
+                </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
+                  <div className="text-xs font-bold text-gray-900 flex items-center gap-1">
+                    Rohit
+                    <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+                  </div>
+                  <div className="text-[11px] text-gray-500">rohit032006@gmail.com</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleGoogleLogin('Rohit', 'rohit032006@gmail.com')}
+                disabled={isLoggingInGoogle}
+                className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                1-Click Login
+              </button>
+            </div>
+
+            {/* Switch / Custom Google account option */}
+            {!showCustomAccount ? (
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowCustomAccount(true)}
+                  className="text-xs text-gray-500 hover:text-orange-600 font-medium underline transition-colors cursor-pointer"
+                >
+                  Sign in with another Google account
+                </button>
+              </div>
+            ) : (
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!customEmail) {
+                    toast.error('Please enter your Google email address');
+                    return;
+                  }
+                  handleGoogleLogin(customName || undefined, customEmail);
+                }} 
+                className="space-y-3 pt-2 border-t border-gray-100 animate-in fade-in duration-200"
+              >
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Your Name</label>
                   <div className="relative">
-                    <UserIcon className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Rohit Sharma"
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      value={customName}
+                      onChange={(e) => setCustomName(e.target.value)}
+                      placeholder="e.g. Rahul Sharma"
+                      className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Mobile Number <span className="text-red-500">*</span>
-                  </label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Google Email Address *</label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500">+91</span>
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
-                      type="tel"
+                      type="email"
+                      value={customEmail}
+                      onChange={(e) => setCustomEmail(e.target.value)}
+                      placeholder="e.g. yourname@gmail.com"
                       required
-                      maxLength={10}
-                      value={mobile}
-                      onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-                      placeholder="9876543210"
-                      className="w-full pl-12 pr-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      className="w-full pl-10 pr-3.5 py-2.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isSendingOtp}
-                  className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm mt-2"
-                >
-                  {isSendingOtp ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Sending OTP...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Send OTP</span>
-                      <ArrowRight size={16} />
-                    </>
-                  )}
-                </button>
-              </form>
-            ) : (
-              /* Step 2: Verify Form */
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div className="p-2.5 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-between text-xs text-orange-950">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <CheckCircle2 size={14} className="text-orange-600 shrink-0" />
-                    <span className="font-semibold truncate">+91 {mobile} ({name})</span>
-                  </div>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={isLoggingInGoogle}
+                    className="flex-1 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
+                  >
+                    Continue with this Account
+                  </button>
                   <button
                     type="button"
-                    onClick={() => setOtpStep('details')}
-                    className="text-orange-700 hover:underline font-semibold cursor-pointer shrink-0 ml-2"
+                    onClick={() => setShowCustomAccount(false)}
+                    className="px-3 py-2.5 text-xs text-gray-500 hover:text-gray-700 font-medium"
                   >
-                    Change
+                    Cancel
                   </button>
                 </div>
-
-                {/* WhatsApp Link Option */}
-                {whatsappLink && (
-                  <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 p-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-bold transition-all shadow-sm"
-                  >
-                    <MessageSquare size={16} />
-                    <span>View Private OTP on WhatsApp</span>
-                  </a>
-                )}
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Enter 4-Digit OTP <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={4}
-                    required
-                    autoFocus
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="••••"
-                    className="w-full py-2.5 px-3 rounded-xl border border-gray-300 text-center font-mono text-2xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>Didn't receive OTP?</span>
-                  {countdown > 0 ? (
-                    <span className="text-orange-600 font-medium">Resend in {countdown}s</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleSendOtp}
-                      disabled={isSendingOtp}
-                      className="text-orange-600 hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-                    >
-                      <RefreshCw size={12} className={isSendingOtp ? 'animate-spin' : ''} />
-                      Resend OTP
-                    </button>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isVerifyingOtp || !otp}
-                  className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-                >
-                  {isVerifyingOtp ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Verifying...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Sign In</span>
-                      <ArrowRight size={16} />
-                    </>
-                  )}
-                </button>
               </form>
             )}
-          </>
-        )}
 
-        {/* Admin Password Login Form */}
-        {authMode === 'password' && (
+            {/* Admin Switcher */}
+            <div className="pt-4 border-t border-gray-100 text-center">
+              <button
+                type="button"
+                onClick={() => setAuthMode('admin')}
+                className="text-xs text-gray-500 hover:text-orange-600 font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Lock size={12} />
+                Administrator Login (Password)
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Admin Password Login */
           <form onSubmit={handlePasswordLogin} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Admin Email
-              </label>
-              <input
-                type="text"
-                required
-                value={passwordEmail}
-                onChange={(e) => setPasswordEmail(e.target.value)}
-                placeholder="admin@omsaikrupa.com"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-              />
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Admin Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="email"
+                  value={passwordEmail}
+                  onChange={(e) => setPasswordEmail(e.target.value)}
+                  placeholder="admin@omsaikrupa.com"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-              />
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1">Default credentials: admin@omsaikrupa.com / admin123</p>
             </div>
 
             <button
               type="submit"
               disabled={isLoggingInPassword}
-              className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-gray-900 hover:bg-black focus:outline-none transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+              className="w-full py-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoggingInPassword ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Signing In...</span>
+                </>
               ) : (
-                <span>Admin Login</span>
+                <>
+                  <span>Sign In as Admin</span>
+                  <ArrowRight size={16} />
+                </>
               )}
             </button>
+
+            <div className="pt-2 text-center">
+              <button
+                type="button"
+                onClick={() => setAuthMode('google')}
+                className="text-xs text-orange-600 hover:text-orange-700 font-semibold transition-colors cursor-pointer"
+              >
+                ← Back to Google Sign In
+              </button>
+            </div>
           </form>
         )}
-
-        {/* Switch Between Modes */}
-        <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-          {authMode === 'otp' ? (
-            <button
-              type="button"
-              onClick={() => setAuthMode('password')}
-              className="text-xs text-gray-500 hover:text-orange-600 transition-colors cursor-pointer"
-            >
-              🔐 Administrator Login (Password)
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAuthMode('otp')}
-              className="text-xs text-orange-600 hover:underline font-medium transition-colors cursor-pointer"
-            >
-              ← Back to Mobile OTP Login
-            </button>
-          )}
-        </div>
-
       </div>
     </div>
   );

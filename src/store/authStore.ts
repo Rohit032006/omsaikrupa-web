@@ -56,10 +56,17 @@ export const useAuthStore = create<AuthState>()(
       loginWithOtp: async (identifier: string, otp: string, name?: string) => {
         set({ isLoading: true });
         try {
-          const isEmail = identifier.includes('@');
-          const payload = isEmail
-            ? { email: identifier, otp, name }
-            : { mobile: identifier, otp, name };
+          const cleanId = (identifier || '').trim();
+          const isEmail = cleanId.includes('@');
+          const cleanMobile = cleanId.replace(/\D/g, '');
+          const cleanEmail = isEmail ? cleanId.toLowerCase() : `${cleanMobile || 'user'}@omsaikrupa.com`;
+
+          const payload = {
+            email: cleanEmail,
+            mobile: cleanMobile || cleanId,
+            otp: (otp || '').trim(),
+            name: name || (cleanMobile ? `User ${cleanMobile.slice(-4)}` : 'Customer')
+          };
           const res = await authApi.verifyOtp(payload);
           const { token, user } = res.data;
           localStorage.setItem('osk_token', token);

@@ -56,7 +56,7 @@ router.post('/verify-otp', async (req, res: Response) => {
     const { email, mobile, otp, name } = req.body;
     const cleanOtp = (otp || '').toString().trim();
     const cleanMobile = (mobile || '').toString().trim().replace(/\D/g, '').slice(-10);
-    const cleanEmail = email ? email.trim().toLowerCase() : (cleanMobile ? `${cleanMobile}@omsaikrupa.com` : '');
+    const cleanEmail = (email || '').toString().trim().toLowerCase() || (cleanMobile ? `${cleanMobile}@omsaikrupa.com` : 'user@omsaikrupa.com');
 
     if (!cleanOtp) {
       return res.status(400).json({ error: 'OTP code is required' });

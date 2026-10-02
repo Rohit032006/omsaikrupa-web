@@ -82,11 +82,11 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md', variant = 'dark' }) => 
       </div>
       <div>
         <div className={`${sizes[size]} font-extrabold tracking-tight ${textColor} leading-none`}>
-          Om Sai Krupa
+          Om Sai Travels
         </div>
         {size !== 'sm' && (
           <div className={`text-[10px] sm:text-xs font-bold ${subtextColor} uppercase tracking-[0.18em] mt-1 flex items-center gap-1.5`}>
-            <span>Vehicle Booking</span>
+            <span>Tours & Travels</span>
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
           </div>
         )}

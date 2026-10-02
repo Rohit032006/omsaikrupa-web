@@ -9,12 +9,12 @@ const AdminSettingsPage = () => {
   const [saving, setSaving] = useState(false);
 
   // Settings State
-  const [companyName, setCompanyName] = useState('Om Sai Krupa');
+  const [companyName, setCompanyName] = useState('Om Sai Travels');
   const [supportPhone, setSupportPhone] = useState('+91 8080959502');
   const [supportEmail, setSupportEmail] = useState('omsaikrupa@gmail.com');
   const [companyAddress, setCompanyAddress] = useState('Pune, Maharashtra, India');
   const [upiId, setUpiId] = useState('8080959502@kotakbank');
-  const [merchantName, setMerchantName] = useState('Om Sai Krupa');
+  const [merchantName, setMerchantName] = useState('Om Sai Travels');
   const [minBookingAdvanceHours, setMinBookingAdvanceHours] = useState(2);
 
   const fetchSettings = async () => {
@@ -22,12 +22,12 @@ const AdminSettingsPage = () => {
       setLoading(true);
       const res = await settingsApi.getAdmin().catch(() => settingsApi.get());
       if (res.data) {
-        setCompanyName(res.data.companyName || 'Om Sai Krupa');
+        setCompanyName(res.data.companyName || 'Om Sai Travels');
         setSupportPhone(res.data.supportPhone || '+91 8080959502');
         setSupportEmail(res.data.supportEmail || 'omsaikrupa@gmail.com');
         setCompanyAddress(res.data.companyAddress || 'Pune, Maharashtra, India');
         setUpiId(res.data.upiId || '8080959502@kotakbank');
-        setMerchantName(res.data.merchantName || 'Om Sai Krupa');
+        setMerchantName(res.data.merchantName || 'Om Sai Travels');
         setMinBookingAdvanceHours(res.data.minBookingAdvanceHours ?? 2);
       }
     } catch (error) {
@@ -184,7 +184,7 @@ const AdminSettingsPage = () => {
                       type="text" 
                       value={merchantName}
                       onChange={(e) => setMerchantName(e.target.value)}
-                      placeholder="Om Sai Krupa"
+                      placeholder="Om Sai Travels"
                       className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-orange-500" 
                       required
                     />

@@ -15,7 +15,7 @@ export const PaymentPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [method, setMethod] = useState<PaymentMethod>('UPI');
   const [upiId, setUpiId] = useState('8080959502@kotakbank');
-  const [merchantName, setMerchantName] = useState('Om Sai Krupa');
+  const [merchantName, setMerchantName] = useState('Om Sai Travels');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [transactionId, setTransactionId] = useState('');
   const [amountPaid, setAmountPaid] = useState<string>('');
@@ -40,7 +40,7 @@ export const PaymentPage: React.FC = () => {
         if (active) {
           setBooking(b);
           const curUpi = s.upiId || '8080959502@kotakbank';
-          const curMerchant = s.merchantName || 'Om Sai Krupa';
+          const curMerchant = s.merchantName || 'Om Sai Travels';
           setUpiId(curUpi);
           setMerchantName(curMerchant);
 
@@ -290,7 +290,7 @@ export const PaymentPage: React.FC = () => {
               <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-2">
                 <Wallet className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Pay Cash at Om Sai Krupa Office</h3>
+              <h3 className="text-lg font-bold text-gray-900">Pay Cash at Om Sai Travels Office</h3>
               <p className="text-xs text-gray-600 leading-relaxed">
                 You can visit our booking office in Pune or pay directly to the driver before the start of the trip.
               </p>
@@ -322,7 +322,7 @@ export const PaymentPage: React.FC = () => {
               </div>
 
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-xs space-y-2">
-                <div className="flex justify-between"><span className="text-gray-500">Beneficiary:</span><span className="font-bold text-gray-900">Om Sai Krupa Tours</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Beneficiary:</span><span className="font-bold text-gray-900">Om Sai Travels</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Bank Name:</span><span className="font-bold text-gray-900">Kotak Mahindra Bank</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Account Number:</span><span className="font-mono font-bold text-gray-900">8080959502</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">IFSC Code:</span><span className="font-mono font-bold text-gray-900">KKBK0000001</span></div>

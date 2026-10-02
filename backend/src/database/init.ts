@@ -90,9 +90,19 @@ export async function initDatabase() {
       driverId TEXT REFERENCES drivers(id),
       status TEXT NOT NULL DEFAULT 'AVAILABLE',
       baseFare REAL NOT NULL DEFAULT 0,
+      pickupLocation TEXT,
+      dropLocation TEXT,
       features TEXT NOT NULL DEFAULT '[]',
       imageUrl TEXT,
       description TEXT,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS otps (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      otp TEXT NOT NULL,
+      expiresAt TEXT NOT NULL,
       createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -182,10 +192,10 @@ export async function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS settings (
       id TEXT PRIMARY KEY DEFAULT 'main',
-      companyName TEXT NOT NULL DEFAULT 'Om Sai Krupa',
+      companyName TEXT NOT NULL DEFAULT 'Om Sai Travels',
       logo TEXT,
       upiId TEXT NOT NULL DEFAULT '8080959502@kotakbank',
-      merchantName TEXT NOT NULL DEFAULT 'Om Sai Krupa',
+      merchantName TEXT NOT NULL DEFAULT 'Om Sai Travels',
       supportPhone TEXT DEFAULT '+91 8080959502',
       supportEmail TEXT DEFAULT 'omsaikrupa@gmail.com',
       companyAddress TEXT DEFAULT 'Shop No. 4, Sai Complex, Airport Road, Pune - 411032',
@@ -198,7 +208,7 @@ export async function initDatabase() {
   // Default settings row if not present
   await client.execute({
     sql: `INSERT OR IGNORE INTO settings (id, companyName, upiId, merchantName, supportPhone, supportEmail, companyAddress, minBookingAdvanceHours)
-          VALUES ('main', 'Om Sai Krupa', ?, 'Om Sai Krupa', '+91 8080959502', 'omsaikrupa@gmail.com', 'Shop No. 4, Sai Complex, Airport Road, Pune - 411032', 2)`,
+          VALUES ('main', 'Om Sai Travels', ?, 'Om Sai Travels', '+91 8080959502', 'omsaikrupa@gmail.com', 'Shop No. 4, Sai Complex, Airport Road, Pune - 411032', 2)`,
     args: [process.env.DEFAULT_UPI_ID || '8080959502@kotakbank'],
   });
 

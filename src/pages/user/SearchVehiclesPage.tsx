@@ -285,7 +285,6 @@ export const SearchVehiclesPage: React.FC = () => {
               const isFullyBooked = availableSeats <= 0;
               const displayName = vehicle.vehicleName || vehicle.name || 'Vehicle';
               const displayType = vehicle.vehicleType || vehicle.type || 'Standard';
-              const fare = vehicle.baseFare || vehicle.pricePerSeat || 1200;
 
               return (
                 <div 
@@ -343,12 +342,16 @@ export const SearchVehiclesPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Right: Fare & Booking CTA */}
-                  <div className="w-full md:w-52 shrink-0 flex flex-col items-center md:items-end justify-center border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
+                  {/* Right: Route & Booking CTA */}
+                  <div className="w-full md:w-56 shrink-0 flex flex-col items-center md:items-end justify-center border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
                     <div className="text-center md:text-right mb-4">
-                      <span className="text-xs text-gray-400 block font-medium">Base Fare Starting At</span>
-                      <span className="text-2xl font-extrabold text-gray-900">₹{fare.toLocaleString('en-IN')}</span>
-                      <span className="text-[11px] text-gray-400 block">per trip</span>
+                      <span className="text-[11px] text-gray-400 block font-semibold uppercase tracking-wider">Assigned Route</span>
+                      <span className="text-sm font-bold text-gray-900 block mt-0.5">
+                        {vehicle.pickupLocation && vehicle.dropLocation 
+                          ? `${vehicle.pickupLocation} ➔ ${vehicle.dropLocation}`
+                          : 'Custom Route Available'}
+                      </span>
+                      <span className="text-[11px] text-emerald-600 font-semibold block mt-0.5">Verified AC Ride</span>
                     </div>
                     
                     <button

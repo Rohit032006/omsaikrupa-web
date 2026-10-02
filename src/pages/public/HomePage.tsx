@@ -36,7 +36,7 @@ const HomePage: React.FC = () => {
       <section className="relative bg-gradient-to-r from-orange-600 to-red-600 pt-20 pb-32 px-4 sm:px-6 lg:px-8 text-center text-white">
         <div className="max-w-4xl mx-auto pt-10">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
-            Book Your Ride with Om Sai Krupa
+            Book Your Ride with Om Sai Travels
           </h1>
           <p className="text-xl sm:text-2xl font-medium text-orange-100 mb-12">
             Safe, comfortable and reliable vehicle booking for airport transfers and travel
@@ -139,7 +139,7 @@ const HomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-14">
             <span className="text-xs font-extrabold uppercase tracking-widest text-orange-600 bg-orange-100 px-3.5 py-1.5 rounded-full inline-block mb-3">
-              Why Om Sai Krupa
+              Why Om Sai Travels
             </span>
             <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Designed for Seamless Journeys</h2>
             <p className="text-gray-500 max-w-xl mx-auto mt-2 text-sm">Safe, punctual and top-rated vehicle rental experience across Maharashtra.</p>
@@ -221,11 +221,11 @@ const HomePage: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {[
-              { cap: '5', name: 'Sedan', price: '₹12/km', subtitle: '4 Passengers + Driver' },
-              { cap: '6', name: 'SUV', price: '₹15/km', subtitle: '5 Passengers + Driver' },
-              { cap: '14', name: 'Traveller', price: '₹22/km', subtitle: '13 Passengers + Driver' },
-              { cap: '17', name: 'Traveller Large', price: '₹25/km', subtitle: '16 Passengers + Driver' },
-              { cap: '20', name: 'Mini Bus', price: '₹30/km', subtitle: '19 Passengers + Driver' }
+              { cap: '5', name: 'Sedan', highlight: 'AC & Pushback', subtitle: '4 Passengers + Driver' },
+              { cap: '6', name: 'SUV', highlight: 'Spacious & Boot Space', subtitle: '5 Passengers + Driver' },
+              { cap: '14', name: 'Traveller', highlight: 'Luxury Pushback', subtitle: '13 Passengers + Driver' },
+              { cap: '17', name: 'Traveller Large', highlight: 'Executive Comfort', subtitle: '16 Passengers + Driver' },
+              { cap: '20', name: 'Mini Bus', highlight: 'Air Suspension', subtitle: '19 Passengers + Driver' }
             ].map((v, i) => (
               <div 
                 key={i} 
@@ -247,8 +247,8 @@ const HomePage: React.FC = () => {
                   <p className="text-gray-400 text-xs mt-0.5 mb-4">{v.subtitle}</p>
 
                   <div className="w-full pt-3 border-t border-gray-100 mt-auto">
-                    <p className="text-gray-400 text-[11px] uppercase tracking-wider font-semibold">Starting from</p>
-                    <p className="text-xl font-extrabold text-orange-600 tracking-tight">{v.price}</p>
+                    <p className="text-gray-400 text-[11px] uppercase tracking-wider font-semibold">Features</p>
+                    <p className="text-sm font-extrabold text-orange-600 tracking-tight">{v.highlight}</p>
                   </div>
                 </div>
 
@@ -256,7 +256,7 @@ const HomePage: React.FC = () => {
                   onClick={() => navigate('/vehicles')}
                   className="w-full py-3.5 bg-gray-50 group-hover:bg-orange-600 text-gray-700 group-hover:text-white font-bold text-xs uppercase tracking-wider border-t border-gray-100 transition-all flex items-center justify-center gap-1.5"
                 >
-                  <span>Select & Book</span>
+                  <span>View & Book</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
@@ -335,7 +335,7 @@ const HomePage: React.FC = () => {
       <section className="py-20 bg-orange-600 text-white text-center">
         <div className="max-w-3xl mx-auto px-4">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">Ready for your journey?</h2>
-          <p className="text-xl text-orange-100 mb-8">Book your transfer now and enjoy a comfortable ride with Om Sai Krupa.</p>
+          <p className="text-xl text-orange-100 mb-8">Book your transfer now and enjoy a comfortable ride with Om Sai Travels.</p>
           <button 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="bg-white text-orange-600 hover:bg-gray-100 font-bold py-4 px-8 rounded-full text-lg shadow-lg transition-transform hover:scale-105"

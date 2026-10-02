@@ -9,7 +9,7 @@ const vehicles = [
     name: 'Standard Sedan',
     capacity: 5,
     type: 'Sedan',
-    price: '₹12/km',
+    routeInfo: 'Airport & City Transfers',
     description: 'Perfect for small families or business trips. Comfortable seating for 4 passengers plus driver.',
     features: ['Air Conditioning', 'Music System', '2 Luggage Bags', 'GPS Navigation']
   },
@@ -18,7 +18,7 @@ const vehicles = [
     name: 'Premium SUV',
     capacity: 6,
     type: 'SUV',
-    price: '₹15/km',
+    routeInfo: 'Outstation & Hill Stations',
     description: 'Spacious interior with extra legroom. Ideal for long journeys and outstation trips.',
     features: ['Rear AC Vents', 'Extra Legroom', '4 Luggage Bags', 'Power Windows']
   },
@@ -27,7 +27,7 @@ const vehicles = [
     name: 'Tempo Traveller',
     capacity: 14,
     type: 'Traveller',
-    price: '₹22/km',
+    routeInfo: 'Group Tours & Family Trips',
     description: 'Great for group tours and large families. Offers push-back seats for maximum comfort.',
     features: ['Pushback Seats', 'LED TV', 'Ample Luggage Space', 'Individual AC Vents']
   },
@@ -36,7 +36,7 @@ const vehicles = [
     name: 'Large Traveller',
     capacity: 17,
     type: 'Traveller',
-    price: '₹25/km',
+    routeInfo: 'Pilgrimage & Inter-City',
     description: 'Extended version of traveller for larger groups looking for comfortable inter-city travel.',
     features: ['Reclining Seats', 'Entertainment System', 'Reading Lights', 'Large Boot Space']
   },
@@ -45,7 +45,7 @@ const vehicles = [
     name: 'Mini Bus',
     capacity: 20,
     type: 'Mini Bus',
-    price: '₹30/km',
+    routeInfo: 'Corporate & Wedding Events',
     description: 'The ultimate choice for corporate outings, school trips, or large wedding parties.',
     features: ['Air Suspension', 'PA System', 'Overhead Storage', 'Wide Aisle']
   }
@@ -115,8 +115,8 @@ const VehiclesPage: React.FC = () => {
 
                 <div className="flex items-center justify-between mt-auto pt-5 border-t border-gray-100">
                   <div>
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Starting from</span>
-                    <p className="text-2xl font-extrabold text-orange-600 tracking-tight">{vehicle.price}</p>
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Ideal For</span>
+                    <p className="text-sm font-extrabold text-orange-600 tracking-tight">{vehicle.routeInfo}</p>
                   </div>
                   <button 
                     onClick={() => navigate('/search-vehicles')}

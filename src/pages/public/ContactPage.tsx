@@ -67,7 +67,7 @@ const ContactPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900 mb-1">Visit Office</h3>
-                <p className="text-gray-600">123 Sai Krupa Building</p>
+                <p className="text-gray-600">Sai Travels Complex</p>
                 <p className="text-gray-600">Main Road, City Center</p>
                 <p className="text-gray-600">Maharashtra, India</p>
                 <p className="text-sm text-gray-500 mt-2">Mon-Sat: 9AM - 8PM</p>

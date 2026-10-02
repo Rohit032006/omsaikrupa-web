@@ -27,6 +27,8 @@ export default api;
 
 // Auth
 export const authApi = {
+  sendOtp: (data: { email: string; name?: string }) => api.post('/auth/send-otp', data),
+  verifyOtp: (data: { email: string; otp: string; name?: string }) => api.post('/auth/verify-otp', data),
   register: (data: any) => api.post('/auth/register', data),
   login: (data: any) => api.post('/auth/login', data),
   me: () => api.get('/auth/me'),

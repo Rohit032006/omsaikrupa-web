@@ -9,7 +9,7 @@ export function generateBookingReceipt(booking: any) {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('OM SAI KRUPA', 20, 18);
+  doc.text('OM SAI TRAVELS', 20, 18);
   
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
@@ -109,8 +109,8 @@ export function generateBookingReceipt(booking: any) {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text('© 2026 Om Sai Krupa. All Rights Reserved.', 20, y + 8);
-  doc.text('For support: info@omsaikrupa.com | +91-9999999999', 20, y + 14);
+  doc.text('© 2026 Om Sai Travels. All Rights Reserved.', 20, y + 8);
+  doc.text('For support: omsaikrupa@gmail.com | +91 8080959502', 20, y + 14);
   
-  doc.save(`OSK-Receipt-${booking.bookingId || 'Download'}.pdf`);
+  doc.save(`OST-Receipt-${booking.bookingId || 'Download'}.pdf`);
 }

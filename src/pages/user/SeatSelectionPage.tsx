@@ -45,8 +45,6 @@ export const SeatSelectionPage: React.FC = () => {
   if (!selectedVehicle) return null;
 
   const maxSelectable = passengers || selectedVehicle.capacity;
-  const pricePerSeat = selectedVehicle.baseFare || selectedVehicle.pricePerSeat || 0;
-  const totalPrice = selectedSeats.length * pricePerSeat;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -138,18 +136,22 @@ export const SeatSelectionPage: React.FC = () => {
                     ) : 'None selected'}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Price per Seat</span>
-                  <span className="font-medium text-gray-900">₹{pricePerSeat.toLocaleString('en-IN')}</span>
-                </div>
+                {(selectedVehicle.pickupLocation || selectedVehicle.dropLocation) && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Route</span>
+                    <span className="font-bold text-gray-900 text-right">
+                      {selectedVehicle.pickupLocation || 'Pickup'} ➔ {selectedVehicle.dropLocation || 'Drop'}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <div className="bg-orange-50 rounded-xl p-4 mb-6">
+              <div className="bg-orange-50 rounded-xl p-4 mb-6 border border-orange-100">
                 <div className="flex justify-between items-center">
-                  <span className="font-bold text-gray-900">Total Amount</span>
-                  <span className="text-2xl font-bold text-orange-600">₹{totalPrice.toLocaleString('en-IN')}</span>
+                  <span className="font-bold text-gray-900">Selected Seats</span>
+                  <span className="text-xl font-bold text-orange-600">{selectedSeats.length} Seat{selectedSeats.length !== 1 ? 's' : ''}</span>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">{selectedSeats.length} seat(s) × ₹{pricePerSeat.toLocaleString('en-IN')}</p>
+                <p className="text-xs text-gray-600 mt-1">Confirmed directly by Om Sai Travels upon request.</p>
               </div>
 
               {selectedSeats.length === 0 && (

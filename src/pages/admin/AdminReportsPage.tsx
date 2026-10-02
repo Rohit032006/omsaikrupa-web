@@ -46,7 +46,7 @@ const AdminReportsPage = () => {
       'Revenue Generated': `₹${v.revenue || 0}`,
       'Status': v.status,
     }));
-    exportToCSV(data, `om_sai_krupa_report_${period.toLowerCase()}.csv`);
+    exportToCSV(data, `om_sai_travels_report_${period.toLowerCase()}.csv`);
     toast.success('Report downloaded as CSV');
   };
 

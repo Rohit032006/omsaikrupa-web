@@ -82,7 +82,7 @@ function App() {
 
           {/* Auth Routes (no nav/footer layout) */}
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/register" element={<Navigate to="/login" replace />} />
 
           {/* User Routes */}
           <Route element={

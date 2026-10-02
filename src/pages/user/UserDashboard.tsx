@@ -208,7 +208,7 @@ export default function UserDashboard() {
                       <td colSpan={5} className="px-6 py-12 text-center">
                         <Car className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                         <h3 className="text-sm font-semibold text-gray-900">No bookings yet</h3>
-                        <p className="mt-1 text-sm text-gray-500">Book your first vehicle ride with Om Sai Krupa.</p>
+                        <p className="mt-1 text-sm text-gray-500">Book your first vehicle ride with Om Sai Travels.</p>
                         <div className="mt-4">
                           <Link
                             to="/search-vehicles"

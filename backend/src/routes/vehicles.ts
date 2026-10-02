@@ -108,7 +108,7 @@ router.get('/:id/seats', async (req, res: Response) => {
 // POST /api/vehicles - Admin: Add vehicle
 router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
-    const { vehicleName, vehicleNumber, capacity, vehicleType, driverId, baseFare, features, description } = req.body;
+    const { vehicleName, vehicleNumber, capacity, vehicleType, driverId, baseFare, features, description, pickupLocation, dropLocation } = req.body;
     if (!vehicleName || !vehicleNumber || !capacity || !vehicleType) {
       return res.status(400).json({ error: 'Required fields missing' });
     }
@@ -116,8 +116,8 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Respo
     if (existing) return res.status(409).json({ error: 'Vehicle number already exists' });
 
     const id = uuidv4();
-    await db.prepare(`INSERT INTO vehicles (id, vehicleName, vehicleNumber, capacity, vehicleType, driverId, status, baseFare, features, description) VALUES (?, ?, ?, ?, ?, ?, 'AVAILABLE', ?, ?, ?)`).run(
-      id, vehicleName, vehicleNumber, capacity, vehicleType, driverId || null, baseFare || 0, JSON.stringify(features || []), description || ''
+    await db.prepare(`INSERT INTO vehicles (id, vehicleName, vehicleNumber, capacity, vehicleType, driverId, status, baseFare, features, description, pickupLocation, dropLocation) VALUES (?, ?, ?, ?, ?, ?, 'AVAILABLE', ?, ?, ?, ?, ?)`).run(
+      id, vehicleName, vehicleNumber, capacity, vehicleType, driverId || null, baseFare || 0, JSON.stringify(features || []), description || '', pickupLocation || null, dropLocation || null
     );
     const vehicle = (await db.prepare('SELECT * FROM vehicles WHERE id = ?').get(id)) as any;
     vehicle.features = JSON.parse(vehicle.features);
@@ -130,12 +130,12 @@ router.post('/', authenticate, requireAdmin, async (req: AuthRequest, res: Respo
 // PUT /api/vehicles/:id - Admin: Update vehicle
 router.put('/:id', authenticate, requireAdmin, async (req: AuthRequest, res: Response) => {
   try {
-    const { vehicleName, vehicleNumber, capacity, vehicleType, driverId, status, baseFare, features, description } = req.body;
+    const { vehicleName, vehicleNumber, capacity, vehicleType, driverId, status, baseFare, features, description, pickupLocation, dropLocation } = req.body;
     const vehicle = await db.prepare('SELECT id FROM vehicles WHERE id = ?').get(req.params.id);
     if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
 
-    await db.prepare(`UPDATE vehicles SET vehicleName=?, vehicleNumber=?, capacity=?, vehicleType=?, driverId=?, status=?, baseFare=?, features=?, description=? WHERE id=?`).run(
-      vehicleName, vehicleNumber, capacity, vehicleType, driverId || null, status, baseFare, JSON.stringify(features || []), description || '', req.params.id
+    await db.prepare(`UPDATE vehicles SET vehicleName=?, vehicleNumber=?, capacity=?, vehicleType=?, driverId=?, status=?, baseFare=?, features=?, description=?, pickupLocation=?, dropLocation=? WHERE id=?`).run(
+      vehicleName, vehicleNumber, capacity, vehicleType, driverId || null, status, baseFare || 0, JSON.stringify(features || []), description || '', pickupLocation || null, dropLocation || null, req.params.id
     );
     const updated = (await db.prepare('SELECT * FROM vehicles WHERE id = ?').get(req.params.id)) as any;
     updated.features = JSON.parse(updated.features);

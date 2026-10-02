@@ -31,7 +31,7 @@ const HowItWorksPage: React.FC = () => {
       <div className="bg-gray-900 py-16 text-center text-white">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">How It Works</h1>
         <p className="text-xl max-w-2xl mx-auto px-4 text-gray-400">
-          Booking a vehicle with Om Sai Krupa is easy, fast, and completely hassle-free. Follow these simple steps.
+          Booking a vehicle with Om Sai Travels is easy, fast, and completely hassle-free. Follow these simple steps.
         </p>
       </div>
 

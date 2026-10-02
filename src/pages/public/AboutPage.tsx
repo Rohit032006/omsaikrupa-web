@@ -6,7 +6,7 @@ const AboutPage: React.FC = () => {
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
       <div className="bg-orange-600 py-20 text-center text-white">
-        <h1 className="text-4xl md:text-5xl font-bold mb-6">About Om Sai Krupa</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-6">About Om Sai Travels</h1>
         <p className="text-xl max-w-3xl mx-auto px-4 text-orange-100">
           Your trusted partner for safe, reliable, and comfortable journeys across the region.
         </p>
@@ -18,7 +18,7 @@ const AboutPage: React.FC = () => {
           <div className="lg:w-1/2 pr-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Mission</h2>
             <p className="text-lg text-gray-600 mb-4 leading-relaxed">
-              At Om Sai Krupa, our mission is to redefine travel by providing a seamless, stress-free transportation experience. We believe that every journey should be as comfortable and enjoyable as the destination itself.
+              At Om Sai Travels, our mission is to redefine travel by providing a seamless, stress-free transportation experience. We believe that every journey should be as comfortable and enjoyable as the destination itself.
             </p>
             <p className="text-lg text-gray-600 leading-relaxed">
               Since our inception, we have been committed to delivering high-quality vehicle booking services, specializing in airport transfers, local sightseeing, and outstation trips. Our customer-first approach ensures that you always travel with peace of mind.

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Car, X, ShieldCheck } from 'lucide-react';
+import { Plus, Edit2, Trash2, Car, X, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { vehicleApi, driverApi } from '../../services/api';
 
@@ -9,7 +9,9 @@ interface VehicleRecord {
   vehicleNumber: string;
   vehicleType: string;
   capacity: number;
-  baseFare: number;
+  baseFare?: number;
+  pickupLocation?: string;
+  dropLocation?: string;
   driverId?: string;
   driverName?: string;
   status: string;
@@ -28,7 +30,8 @@ const AdminVehiclesPage = () => {
   const [vehicleNumber, setVehicleNumber] = useState('');
   const [vehicleType, setVehicleType] = useState('Sedan');
   const [capacity, setCapacity] = useState(5);
-  const [baseFare, setBaseFare] = useState(1200);
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [dropLocation, setDropLocation] = useState('');
   const [driverId, setDriverId] = useState('');
   const [status, setStatus] = useState('AVAILABLE');
   const [features, setFeatures] = useState('AC, Pushback Seats, Luggage Space');
@@ -61,7 +64,8 @@ const AdminVehiclesPage = () => {
     setVehicleNumber('');
     setVehicleType('Sedan');
     setCapacity(5);
-    setBaseFare(1200);
+    setPickupLocation('');
+    setDropLocation('');
     setDriverId('');
     setStatus('AVAILABLE');
     setFeatures('AC, Pushback Seats, Luggage Space');
@@ -74,7 +78,8 @@ const AdminVehiclesPage = () => {
     setVehicleNumber(v.vehicleNumber);
     setVehicleType(v.vehicleType);
     setCapacity(v.capacity);
-    setBaseFare(v.baseFare);
+    setPickupLocation(v.pickupLocation || '');
+    setDropLocation(v.dropLocation || '');
     setDriverId(v.driverId || '');
     setStatus(v.status || 'AVAILABLE');
     setFeatures(v.features || '');
@@ -95,7 +100,9 @@ const AdminVehiclesPage = () => {
         vehicleNumber: vehicleNumber.toUpperCase().trim(),
         vehicleType,
         capacity: Number(capacity),
-        baseFare: Number(baseFare),
+        pickupLocation: pickupLocation.trim(),
+        dropLocation: dropLocation.trim(),
+        baseFare: 0,
         driverId: driverId || null,
         status,
         features,
@@ -134,17 +141,16 @@ const AdminVehiclesPage = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Manage Fleet & Vehicles</h1>
-          <p className="text-xs text-gray-500">Live vehicles available for booking in the system.</p>
+          <p className="text-xs text-gray-500">Live vehicles and dedicated routes available for booking.</p>
         </div>
         <button 
           onClick={openAddModal}
-          className="flex items-center px-4 py-2.5 bg-orange-600 text-white rounded-xl text-xs font-bold hover:bg-orange-700 transition-colors shadow-sm"
+          className="flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
         >
-          <Plus className="w-4 h-4 mr-1.5" /> Add Vehicle
+          <Plus className="w-4 h-4 mr-1.5" /> Add New Vehicle
         </button>
       </div>
 
-      {/* Vehicles Grid */}
       {loading ? (
         <div className="p-12 text-center bg-white rounded-2xl border border-gray-100">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-orange-500 border-t-transparent"></div>
@@ -178,8 +184,16 @@ const AdminVehiclesPage = () => {
                     {vehicle.vehicleNumber}
                   </span>
                 </div>
+
+                {/* Route Pill */}
+                {(vehicle.pickupLocation || vehicle.dropLocation) && (
+                  <div className="mt-1 mb-2 flex items-center text-[11px] font-bold text-orange-800 bg-orange-50/80 px-2.5 py-1.5 rounded-lg border border-orange-200/60">
+                    <MapPin className="w-3.5 h-3.5 mr-1 text-orange-600 shrink-0" />
+                    <span>{vehicle.pickupLocation || 'Pune'} ➔ {vehicle.dropLocation || 'Mumbai / Outstation'}</span>
+                  </div>
+                )}
                 
-                <div className="space-y-1.5 mt-3 text-xs text-gray-600 flex-1">
+                <div className="space-y-1.5 mt-2 text-xs text-gray-600 flex-1">
                   <div className="flex justify-between py-1 border-b border-gray-50">
                     <span className="text-gray-400">Category</span>
                     <span className="font-semibold text-gray-800">{vehicle.vehicleType}</span>
@@ -187,10 +201,6 @@ const AdminVehiclesPage = () => {
                   <div className="flex justify-between py-1 border-b border-gray-50">
                     <span className="text-gray-400">Seating Capacity</span>
                     <span className="font-bold text-orange-600">{vehicle.capacity} Seats</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b border-gray-50">
-                    <span className="text-gray-400">Starting Fare</span>
-                    <span className="font-bold text-gray-900">₹{vehicle.baseFare?.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between py-1">
                     <span className="text-gray-400">Driver</span>
@@ -257,6 +267,32 @@ const AdminVehiclesPage = () => {
                 </div>
               </div>
 
+              {/* Pickup and Drop Locations */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Pickup Location *</label>
+                  <input
+                    type="text"
+                    value={pickupLocation}
+                    onChange={(e) => setPickupLocation(e.target.value)}
+                    placeholder="उदा. Pune Airport / Swargate"
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Drop Location *</label>
+                  <input
+                    type="text"
+                    value={dropLocation}
+                    onChange={(e) => setDropLocation(e.target.value)}
+                    placeholder="उदा. Mumbai Airport / Shirdi"
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Capacity (Seats) *</label>
@@ -286,16 +322,6 @@ const AdminVehiclesPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">Base Starting Fare (₹) *</label>
-                  <input
-                    type="number"
-                    value={baseFare}
-                    onChange={(e) => setBaseFare(Number(e.target.value))}
-                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    required
-                  />
-                </div>
-                <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">Status</label>
                   <select
                     value={status}
@@ -307,49 +333,46 @@ const AdminVehiclesPage = () => {
                     <option value="MAINTENANCE">MAINTENANCE</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Assign Driver (Optional)</label>
+                  <select
+                    value={driverId}
+                    onChange={(e) => setDriverId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
+                  >
+                    <option value="">No driver assigned</option>
+                    {drivers.map(d => (
+                      <option key={d.id} value={d.id}>{d.name} ({d.mobile})</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Assign Driver (Optional)</label>
-                <select
-                  value={driverId}
-                  onChange={(e) => setDriverId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
-                >
-                  <option value="">No driver assigned</option>
-                  {drivers.map(d => (
-                    <option key={d.id} value={d.id}>
-                      {d.name} ({d.mobile}) - {d.status}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Features / Amenities</label>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Features (Comma separated)</label>
                 <input
                   type="text"
                   value={features}
                   onChange={(e) => setFeatures(e.target.value)}
-                  placeholder="e.g. AC, GPS, Luggage Rack, Bluetooth"
+                  placeholder="AC, Music System, GPS, Pushback Seats"
                   className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
 
-              <div className="pt-3 border-t border-gray-100 flex justify-end gap-2">
+              <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-gray-200 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl text-xs font-bold hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold shadow-sm disabled:opacity-50"
+                  className="px-5 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold transition-colors shadow-sm disabled:opacity-50"
                 >
-                  {submitting ? 'Saving...' : editingVehicle ? 'Update Vehicle' : 'Save Vehicle'}
+                  {submitting ? 'Saving...' : editingVehicle ? 'Update Vehicle' : 'Add Vehicle'}
                 </button>
               </div>
             </form>

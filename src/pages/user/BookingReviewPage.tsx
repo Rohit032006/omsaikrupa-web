@@ -77,8 +77,8 @@ export const BookingReviewPage: React.FC = () => {
       
       // Store returned booking ID and navigate
       setBookingId(response.data.id, response.data.bookingId);
-      toast.success('Booking initiated! Proceeding to payment...');
-      navigate(`/book/payment/${response.data.id}`);
+      toast.success('Booking confirmed successfully!');
+      navigate(`/booking-confirmation/${response.data.id}`);
       
     } catch (error: any) {
       console.error('Failed to create booking', error);
@@ -249,37 +249,41 @@ export const BookingReviewPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Price Summary Panel */}
+        {/* Booking Summary Panel */}
         <div className="w-full lg:w-96">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
-            <h2 className="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">Price Summary</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100">Booking Summary</h2>
             
             <div className="space-y-4 mb-6">
               <div className="flex justify-between text-sm text-gray-600">
-                <span>Base Fare ({selectedSeats.length} seats)</span>
-                <span className="font-medium text-gray-900">₹{totalAmount.toLocaleString('en-IN')}</span>
+                <span>Selected Seats</span>
+                <span className="font-bold text-gray-900">{selectedSeats.join(', ')} ({selectedSeats.length} seats)</span>
               </div>
               <div className="flex justify-between text-sm text-gray-600">
-                <span>Booking Fee</span>
-                <span className="text-green-600 font-medium">Free</span>
+                <span>Route</span>
+                <span className="font-semibold text-gray-900 text-right">{curPickup} ➔ {curDrop}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-600">
-                <span>Taxes & GST</span>
-                <span className="text-gray-900 font-medium">Included</span>
+                <span>Vehicle Type</span>
+                <span className="text-gray-900 font-medium">{selectedVehicle.vehicleType || selectedVehicle.type || 'Standard'}</span>
+              </div>
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Seat Reservation</span>
+                <span className="text-green-600 font-bold">Instant Hold</span>
               </div>
               
               <div className="border-t border-gray-100 pt-4 flex justify-between items-baseline">
-                <span className="text-base font-bold text-gray-900">Total Amount</span>
+                <span className="text-base font-bold text-gray-900">Payment Status</span>
                 <div className="text-right">
-                  <span className="text-2xl font-extrabold text-orange-600">₹{totalAmount.toLocaleString('en-IN')}</span>
-                  <span className="text-[10px] text-gray-400 block">Inclusive of all taxes</span>
+                  <span className="text-base font-extrabold text-orange-600">Confirmed on Request</span>
+                  <span className="text-[10px] text-gray-400 block">Fare settled with driver / office</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-gray-50 rounded-xl p-3.5 mb-6 flex items-start text-xs text-gray-500">
               <ShieldCheck className="w-4 h-4 text-green-600 mr-2 shrink-0 mt-0.5" />
-              <span>Safe and secure checkout. We verify your UPI transaction directly with reference UTR.</span>
+              <span>Safe and verified ride by Om Sai Travels. Instant booking notification will be recorded.</span>
             </div>
 
             <button
@@ -290,10 +294,10 @@ export const BookingReviewPage: React.FC = () => {
               {isSubmitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Processing...</span>
+                  <span>Confirming Booking...</span>
                 </>
               ) : (
-                <span>Proceed to Payment →</span>
+                <span>Confirm & Book Ride →</span>
               )}
             </button>
           </div>

@@ -83,7 +83,7 @@ const AdminBookingsPage = () => {
       'Payment Status': b.paymentStatus,
       'Booking Status': b.bookingStatus,
     }));
-    exportToCSV(dataToExport, `om_sai_krupa_bookings_${new Date().toISOString().split('T')[0]}.csv`);
+    exportToCSV(dataToExport, `om_sai_travels_bookings_${new Date().toISOString().split('T')[0]}.csv`);
     toast.success('Bookings exported to CSV');
   };
 

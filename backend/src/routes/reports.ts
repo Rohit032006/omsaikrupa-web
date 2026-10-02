@@ -4,7 +4,7 @@ import { authenticate, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
-router.get('/bookings', authenticate, requireAdmin, (req, res: Response) => {
+router.get('/bookings', authenticate, requireAdmin, async (req, res: Response) => {
   try {
     const { from, to, status } = req.query;
     let query = `
@@ -17,13 +17,13 @@ router.get('/bookings', authenticate, requireAdmin, (req, res: Response) => {
     if (to) { query += ' AND b.travelDate <= ?'; params.push(to); }
     if (status) { query += ' AND b.bookingStatus = ?'; params.push(status); }
     query += ' ORDER BY b.travelDate DESC';
-    return res.json(db.prepare(query).all(...params));
+    return res.json(await db.prepare(query).all(...params));
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
 });
 
-router.get('/revenue', authenticate, requireAdmin, (req, res: Response) => {
+router.get('/revenue', authenticate, requireAdmin, async (req, res: Response) => {
   try {
     const { period } = req.query; // daily, weekly, monthly
     let query = '';
@@ -34,15 +34,15 @@ router.get('/revenue', authenticate, requireAdmin, (req, res: Response) => {
     } else {
       query = "SELECT strftime('%Y-W%W', createdAt) as week, SUM(paidAmount) as revenue, COUNT(*) as bookings FROM bookings WHERE bookingStatus != 'CANCELLED' GROUP BY strftime('%Y-W%W', createdAt) ORDER BY week DESC LIMIT 8";
     }
-    return res.json(db.prepare(query).all());
+    return res.json(await db.prepare(query).all());
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
 });
 
-router.get('/vehicles', authenticate, requireAdmin, (_req, res: Response) => {
+router.get('/vehicles', authenticate, requireAdmin, async (_req, res: Response) => {
   try {
-    const stats = db.prepare(`
+    const stats = await db.prepare(`
       SELECT v.vehicleName, v.vehicleNumber, v.capacity, v.vehicleType,
              COUNT(b.id) as totalBookings,
              COALESCE(SUM(b.totalAmount), 0) as totalRevenue
@@ -55,13 +55,18 @@ router.get('/vehicles', authenticate, requireAdmin, (_req, res: Response) => {
   }
 });
 
-router.get('/payments', authenticate, requireAdmin, (_req, res: Response) => {
+router.get('/payments', authenticate, requireAdmin, async (_req, res: Response) => {
   try {
+    const total = ((await db.prepare('SELECT COALESCE(SUM(amount), 0) as s FROM payments').get()) as any)?.s || 0;
+    const verified = ((await db.prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payments WHERE status = 'VERIFIED'").get()) as any)?.s || 0;
+    const pending = ((await db.prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payments WHERE status IN ('PENDING', 'SUBMITTED')").get()) as any)?.s || 0;
+    const byMethod = await db.prepare("SELECT method, COUNT(*) as count, SUM(amount) as total FROM payments GROUP BY method").all();
+
     const stats = {
-      total: (db.prepare('SELECT COALESCE(SUM(amount), 0) as s FROM payments').get() as any).s,
-      verified: (db.prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payments WHERE status = 'VERIFIED'").get() as any).s,
-      pending: (db.prepare("SELECT COALESCE(SUM(amount), 0) as s FROM payments WHERE status IN ('PENDING', 'SUBMITTED')").get() as any).s,
-      byMethod: db.prepare("SELECT method, COUNT(*) as count, SUM(amount) as total FROM payments GROUP BY method").all(),
+      total,
+      verified,
+      pending,
+      byMethod,
     };
     return res.json(stats);
   } catch (error: any) {
@@ -69,9 +74,9 @@ router.get('/payments', authenticate, requireAdmin, (_req, res: Response) => {
   }
 });
 
-router.get('/cancellations', authenticate, requireAdmin, (_req, res: Response) => {
+router.get('/cancellations', authenticate, requireAdmin, async (_req, res: Response) => {
   try {
-    const data = db.prepare(`
+    const data = await db.prepare(`
       SELECT b.*, u.name as userName FROM bookings b JOIN users u ON b.userId = u.id
       WHERE b.bookingStatus = 'CANCELLED' ORDER BY b.updatedAt DESC
     `).all();

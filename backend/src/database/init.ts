@@ -1,24 +1,63 @@
-import Database, { Database as DatabaseInstance } from 'better-sqlite3';
+import { createClient, Client } from '@libsql/client';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
 dotenv.config();
 
-const DB_PATH = process.env.DB_PATH || './data/omsaikrupa.db';
-const dbDir = path.dirname(DB_PATH);
+const tursoUrl = process.env.TURSO_DATABASE_URL;
+const tursoToken = process.env.TURSO_AUTH_TOKEN;
 
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+let client: Client;
+
+if (tursoUrl && tursoToken) {
+  client = createClient({
+    url: tursoUrl,
+    authToken: tursoToken,
+  });
+} else {
+  const DB_PATH = process.env.DB_PATH || './data/omsaikrupa.db';
+  const dbDir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+  }
+  client = createClient({
+    url: `file:${path.resolve(DB_PATH)}`,
+  });
 }
 
-export const db: DatabaseInstance = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+export { client };
 
-export function initDatabase() {
-  db.exec(`
+export const db = {
+  prepare: (sql: string) => ({
+    get: async (...args: any[]) => {
+      const params = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
+      const res = await client.execute({ sql, args: params });
+      return res.rows[0] ? (res.rows[0] as Record<string, any>) : undefined;
+    },
+    all: async (...args: any[]) => {
+      const params = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
+      const res = await client.execute({ sql, args: params });
+      return res.rows as Record<string, any>[];
+    },
+    run: async (...args: any[]) => {
+      const params = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
+      const res = await client.execute({ sql, args: params });
+      return {
+        changes: res.rowsAffected,
+        lastInsertRowid: res.lastInsertRowid ? Number(res.lastInsertRowid) : 0,
+      };
+    },
+  }),
+  exec: async (sql: string) => {
+    await client.executeMultiple(sql);
+  },
+};
+
+export async function initDatabase() {
+  await client.executeMultiple(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -59,7 +98,7 @@ export function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS bookings (
       id TEXT PRIMARY KEY,
-      bookingId TEXT NOT NULL UNIQUE,
+      bookingId TEXT UNIQUE NOT NULL,
       userId TEXT NOT NULL REFERENCES users(id),
       vehicleId TEXT NOT NULL REFERENCES vehicles(id),
       travelDate TEXT NOT NULL,
@@ -70,7 +109,7 @@ export function initDatabase() {
       flightTime TEXT,
       tripType TEXT NOT NULL DEFAULT 'LOCAL',
       passengerCount INTEGER NOT NULL DEFAULT 1,
-      totalAmount REAL NOT NULL DEFAULT 0,
+      totalAmount REAL NOT NULL,
       paidAmount REAL NOT NULL DEFAULT 0,
       remainingAmount REAL NOT NULL DEFAULT 0,
       paymentStatus TEXT NOT NULL DEFAULT 'PENDING',
@@ -84,7 +123,7 @@ export function initDatabase() {
       id TEXT PRIMARY KEY,
       bookingId TEXT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
       seatNumber TEXT NOT NULL,
-      UNIQUE(bookingId, seatNumber)
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS passengers (
@@ -95,7 +134,8 @@ export function initDatabase() {
       mobile TEXT NOT NULL,
       age INTEGER,
       gender TEXT,
-      specialRequirement TEXT
+      specialRequirement TEXT,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS payments (
@@ -105,9 +145,8 @@ export function initDatabase() {
       amount REAL NOT NULL,
       method TEXT NOT NULL DEFAULT 'UPI',
       utrNumber TEXT,
-      transactionId TEXT,
+      paymentDate TEXT NOT NULL DEFAULT (datetime('now')),
       screenshotUrl TEXT,
-      paymentDate TEXT,
       status TEXT NOT NULL DEFAULT 'PENDING',
       verifiedBy TEXT REFERENCES users(id),
       verifiedAt TEXT,
@@ -117,15 +156,17 @@ export function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS trips (
       id TEXT PRIMARY KEY,
-      bookingId TEXT REFERENCES bookings(id),
-      vehicleId TEXT NOT NULL REFERENCES vehicles(id),
+      bookingId TEXT NOT NULL REFERENCES bookings(id),
       driverId TEXT REFERENCES drivers(id),
-      date TEXT NOT NULL,
-      pickup TEXT NOT NULL,
-      dropLocation TEXT NOT NULL,
+      vehicleId TEXT REFERENCES vehicles(id),
       startTime TEXT,
       endTime TEXT,
+      startOdometer REAL,
+      endOdometer REAL,
+      tollCharges REAL DEFAULT 0,
+      parkingCharges REAL DEFAULT 0,
       status TEXT NOT NULL DEFAULT 'SCHEDULED',
+      notes TEXT,
       createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -147,122 +188,30 @@ export function initDatabase() {
       merchantName TEXT NOT NULL DEFAULT 'Om Sai Krupa',
       supportPhone TEXT DEFAULT '+91 8080959502',
       supportEmail TEXT DEFAULT 'omsaikrupa@gmail.com',
-      companyAddress TEXT DEFAULT 'Pune, Maharashtra, India',
+      companyAddress TEXT DEFAULT 'Shop No. 4, Sai Complex, Airport Road, Pune - 411032',
       cancellationRules TEXT DEFAULT '{}',
       minBookingAdvanceHours INTEGER DEFAULT 2,
       updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
 
-  // Seed or update default settings
-  const settingsRow = db.prepare('SELECT id FROM settings WHERE id = ?').get('main');
-  if (!settingsRow) {
-    db.prepare(`
-      INSERT INTO settings (id, upiId, supportPhone, supportEmail) 
-      VALUES ('main', '8080959502@kotakbank', '+91 8080959502', 'omsaikrupa@gmail.com')
-    `).run();
-  } else {
-    db.prepare(`
-      UPDATE settings 
-      SET upiId = '8080959502@kotakbank', supportPhone = '+91 8080959502', supportEmail = 'omsaikrupa@gmail.com' 
-      WHERE id = 'main'
-    `).run();
-  }
+  // Default settings row if not present
+  await client.execute({
+    sql: `INSERT OR IGNORE INTO settings (id, companyName, upiId, merchantName, supportPhone, supportEmail, companyAddress, minBookingAdvanceHours)
+          VALUES ('main', 'Om Sai Krupa', ?, 'Om Sai Krupa', '+91 8080959502', 'omsaikrupa@gmail.com', 'Shop No. 4, Sai Complex, Airport Road, Pune - 411032', 2)`,
+    args: [process.env.DEFAULT_UPI_ID || '8080959502@kotakbank'],
+  });
 
-  // Seed demo data
-  seedDemoData();
+  // Seed demo data only if no users exist
+  const userCount = await client.execute('SELECT COUNT(*) as count FROM users');
+  if (Number(userCount.rows[0]?.count || 0) === 0) {
+    console.log('Seeding initial admin user...');
+    const adminId = uuidv4();
+    await client.execute({
+      sql: `INSERT INTO users (id, name, email, mobile, passwordHash, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [adminId, 'Admin User', 'admin@omsaikrupa.com', '8080959502', bcrypt.hashSync('Admin@123', 12), 'ADMIN', 'ACTIVE'],
+    });
+  }
 
   console.log('✅ Database initialized successfully');
-}
-
-function seedDemoData() {
-  const adminExists = db.prepare('SELECT id FROM users WHERE role = ?').get('ADMIN');
-  if (adminExists) return;
-
-  const bcrypt = require('bcryptjs');
-  const { v4: uuidv4 } = require('uuid');
-
-  // Admin user
-  const adminId = uuidv4();
-  db.prepare(`INSERT INTO users (id, name, email, mobile, passwordHash, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
-    adminId, 'Admin User', 'admin@omsaikrupa.com', '9000000000',
-    bcrypt.hashSync('Admin@123', 12), 'ADMIN', 'ACTIVE'
-  );
-
-  // Demo users
-  const user1Id = uuidv4();
-  const user2Id = uuidv4();
-  db.prepare(`INSERT INTO users (id, name, email, mobile, passwordHash, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
-    user1Id, 'Rahul Sharma', 'rahul@example.com', '9876543210',
-    bcrypt.hashSync('User@123', 12), 'USER', 'ACTIVE'
-  );
-  db.prepare(`INSERT INTO users (id, name, email, mobile, passwordHash, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(
-    user2Id, 'Priya Patel', 'priya@example.com', '9876543211',
-    bcrypt.hashSync('User@123', 12), 'USER', 'ACTIVE'
-  );
-
-  // Demo drivers
-  const driver1Id = uuidv4();
-  const driver2Id = uuidv4();
-  const driver3Id = uuidv4();
-  db.prepare(`INSERT INTO drivers (id, name, mobile, licenseNumber, licenseExpiry, status) VALUES (?, ?, ?, ?, ?, ?)`).run(
-    driver1Id, 'Ramesh Kumar', '9111111111', 'MH12AB1234', '2028-12-31', 'AVAILABLE'
-  );
-  db.prepare(`INSERT INTO drivers (id, name, mobile, licenseNumber, licenseExpiry, status) VALUES (?, ?, ?, ?, ?, ?)`).run(
-    driver2Id, 'Suresh Patil', '9111111112', 'MH12CD5678', '2027-06-30', 'AVAILABLE'
-  );
-  db.prepare(`INSERT INTO drivers (id, name, mobile, licenseNumber, licenseExpiry, status) VALUES (?, ?, ?, ?, ?, ?)`).run(
-    driver3Id, 'Vijay Singh', '9111111113', 'MH12EF9012', '2029-03-31', 'AVAILABLE'
-  );
-
-  // Demo vehicles
-  const v1Id = uuidv4();
-  const v2Id = uuidv4();
-  const v3Id = uuidv4();
-  const v4Id = uuidv4();
-  const v5Id = uuidv4();
-
-  const vehicles = [
-    { id: v1Id, name: 'Swift Dzire', number: 'MH12AB1001', capacity: 5, type: 'SEDAN', driver: driver1Id, fare: 1200, features: JSON.stringify(['AC', 'Comfortable Seats', 'Experienced Driver', 'Luggage Space', 'GPS Tracking']) },
-    { id: v2Id, name: 'Innova Crysta', number: 'MH12AB1002', capacity: 6, type: 'SUV', driver: driver2Id, fare: 1800, features: JSON.stringify(['AC', 'Comfortable Seats', 'Experienced Driver', 'Large Luggage Space', 'GPS Tracking', 'USB Charging']) },
-    { id: v3Id, name: 'Tempo Traveller', number: 'MH12AB1003', capacity: 14, type: 'MINIVAN', driver: driver3Id, fare: 3500, features: JSON.stringify(['AC', 'Push-Back Seats', 'Experienced Driver', 'Luggage Carrier', 'GPS Tracking', 'Music System']) },
-    { id: v4Id, name: 'Luxury Traveller', number: 'MH12AB1004', capacity: 17, type: 'MINIBUS', driver: null, fare: 4500, features: JSON.stringify(['AC', 'Reclining Seats', 'Experienced Driver', 'Luggage Carrier', 'GPS Tracking', 'Music System', 'Reading Lights']) },
-    { id: v5Id, name: 'Deluxe Coach', number: 'MH12AB1005', capacity: 20, type: 'MINIBUS', driver: null, fare: 5500, features: JSON.stringify(['AC', 'Premium Seats', 'Experienced Driver', 'Overhead Luggage', 'GPS Tracking', 'Entertainment System', 'USB Charging', 'Reading Lights']) },
-  ];
-
-  for (const v of vehicles) {
-    db.prepare(`INSERT INTO vehicles (id, vehicleName, vehicleNumber, capacity, vehicleType, driverId, status, baseFare, features) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-      v.id, v.name, v.number, v.capacity, v.type, v.driver, 'AVAILABLE', v.fare, v.features
-    );
-  }
-
-  // Demo booking
-  const bookingId = uuidv4();
-  const bookingRef = 'OSK-2026-00001';
-  db.prepare(`INSERT INTO bookings (id, bookingId, userId, vehicleId, travelDate, pickupLocation, dropLocation, pickupTime, tripType, passengerCount, totalAmount, paidAmount, remainingAmount, paymentStatus, bookingStatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    bookingId, bookingRef, user1Id, v3Id, '2026-10-15', 'Pune Airport', 'Koregaon Park, Pune', '14:30', 'AIRPORT_PICKUP', 3, 10500, 5000, 5500, 'PARTIAL', 'CONFIRMED'
-  );
-
-  const seat1Id = uuidv4();
-  const seat2Id = uuidv4();
-  const seat3Id = uuidv4();
-  db.prepare(`INSERT INTO booking_seats (id, bookingId, seatNumber) VALUES (?, ?, ?)`).run(seat1Id, bookingId, '04');
-  db.prepare(`INSERT INTO booking_seats (id, bookingId, seatNumber) VALUES (?, ?, ?)`).run(seat2Id, bookingId, '05');
-  db.prepare(`INSERT INTO booking_seats (id, bookingId, seatNumber) VALUES (?, ?, ?)`).run(seat3Id, bookingId, '06');
-
-  const p1Id = uuidv4();
-  const p2Id = uuidv4();
-  const p3Id = uuidv4();
-  db.prepare(`INSERT INTO passengers (id, bookingId, seatNumber, name, mobile, age, gender) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(p1Id, bookingId, '04', 'Rahul Sharma', '9876543210', 35, 'MALE');
-  db.prepare(`INSERT INTO passengers (id, bookingId, seatNumber, name, mobile, age, gender) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(p2Id, bookingId, '05', 'Sunita Sharma', '9876543210', 32, 'FEMALE');
-  db.prepare(`INSERT INTO passengers (id, bookingId, seatNumber, name, mobile, age, gender) VALUES (?, ?, ?, ?, ?, ?, ?)`).run(p3Id, bookingId, '06', 'Arjun Sharma', '9876543210', 8, 'MALE');
-
-  const payId = uuidv4();
-  db.prepare(`INSERT INTO payments (id, bookingId, userId, amount, method, utrNumber, paymentDate, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`).run(
-    payId, bookingId, user1Id, 5000, 'UPI', 'UTR123456789012', '2026-10-02', 'VERIFIED'
-  );
-
-  console.log('✅ Demo data seeded successfully');
-  console.log('📧 Admin: admin@omsaikrupa.com / Admin@123');
-  console.log('👤 User: rahul@example.com / User@123');
 }

@@ -8,7 +8,7 @@ import { AuthRequest, authenticate } from '../middleware/auth';
 const router = Router();
 
 // POST /api/auth/register
-router.post('/register', (req, res: Response) => {
+router.post('/register', async (req, res: Response) => {
   try {
     const { name, email, mobile, password } = req.body;
 
@@ -25,18 +25,18 @@ router.post('/register', (req, res: Response) => {
       return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
 
-    const existing = db.prepare('SELECT id FROM users WHERE email = ? OR mobile = ?').get(email, mobile) as any;
+    const existing = (await db.prepare('SELECT id FROM users WHERE email = ? OR mobile = ?').get(email, mobile)) as any;
     if (existing) {
       return res.status(409).json({ error: 'Email or mobile already registered' });
     }
 
     const id = uuidv4();
     const passwordHash = bcrypt.hashSync(password, 12);
-    db.prepare('INSERT INTO users (id, name, email, mobile, passwordHash, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+    await db.prepare('INSERT INTO users (id, name, email, mobile, passwordHash, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
       id, name, email, mobile, passwordHash, 'USER', 'ACTIVE'
     );
 
-    const user = db.prepare('SELECT id, name, email, mobile, role, status, createdAt FROM users WHERE id = ?').get(id) as any;
+    const user = (await db.prepare('SELECT id, name, email, mobile, role, status, createdAt FROM users WHERE id = ?').get(id)) as any;
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
 
     return res.status(201).json({ token, user });
@@ -46,7 +46,7 @@ router.post('/register', (req, res: Response) => {
 });
 
 // POST /api/auth/login
-router.post('/login', (req, res: Response) => {
+router.post('/login', async (req, res: Response) => {
   try {
     const { emailOrMobile, password } = req.body;
 
@@ -54,7 +54,7 @@ router.post('/login', (req, res: Response) => {
       return res.status(400).json({ error: 'Email/mobile and password are required' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ? OR mobile = ?').get(emailOrMobile, emailOrMobile) as any;
+    const user = (await db.prepare('SELECT * FROM users WHERE email = ? OR mobile = ?').get(emailOrMobile, emailOrMobile)) as any;
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -77,9 +77,9 @@ router.post('/login', (req, res: Response) => {
 });
 
 // GET /api/auth/me
-router.get('/me', authenticate, (req: AuthRequest, res: Response) => {
+router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const user = db.prepare('SELECT id, name, email, mobile, role, status, profilePhoto, address, createdAt FROM users WHERE id = ?').get(req.user!.id) as any;
+    const user = (await db.prepare('SELECT id, name, email, mobile, role, status, profilePhoto, address, createdAt FROM users WHERE id = ?').get(req.user!.id)) as any;
     return res.json({ user });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
@@ -87,10 +87,10 @@ router.get('/me', authenticate, (req: AuthRequest, res: Response) => {
 });
 
 // POST /api/auth/change-password
-router.post('/change-password', authenticate, (req: AuthRequest, res: Response) => {
+router.post('/change-password', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user!.id) as any;
+    const user = (await db.prepare('SELECT * FROM users WHERE id = ?').get(req.user!.id)) as any;
 
     if (!bcrypt.compareSync(currentPassword, user.passwordHash)) {
       return res.status(400).json({ error: 'Current password is incorrect' });
@@ -100,7 +100,7 @@ router.post('/change-password', authenticate, (req: AuthRequest, res: Response) 
     }
 
     const newHash = bcrypt.hashSync(newPassword, 12);
-    db.prepare('UPDATE users SET passwordHash = ? WHERE id = ?').run(newHash, req.user!.id);
+    await db.prepare('UPDATE users SET passwordHash = ? WHERE id = ?').run(newHash, req.user!.id);
     return res.json({ message: 'Password changed successfully' });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });

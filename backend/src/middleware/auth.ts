@@ -11,7 +11,7 @@ export interface AuthRequest extends Request {
   };
 }
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -23,7 +23,7 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     const secret = process.env.JWT_SECRET || 'fallback_secret';
     const decoded = jwt.verify(token, secret) as any;
 
-    const user = db.prepare('SELECT id, email, role, name, status FROM users WHERE id = ?').get(decoded.id) as any;
+    const user = (await db.prepare('SELECT id, email, role, name, status FROM users WHERE id = ?').get(decoded.id)) as any;
     if (!user) {
       res.status(401).json({ error: 'User not found' });
       return;

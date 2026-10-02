@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { 
-  Mail, 
+  Phone, 
   Lock, 
-  KeyRound, 
+  User as UserIcon, 
   Loader2, 
   ArrowRight, 
   CheckCircle2, 
-  RefreshCw 
+  RefreshCw,
+  MessageSquare
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { authApi } from '../../services/api';
@@ -23,11 +24,11 @@ export const LoginPage = () => {
   const [authMode, setAuthMode] = useState<'otp' | 'password'>('otp');
 
   // OTP Flow States
-  const [otpStep, setOtpStep] = useState<'email' | 'verify'>('email');
-  const [email, setEmail] = useState('');
+  const [otpStep, setOtpStep] = useState<'details' | 'verify'>('details');
   const [name, setName] = useState('');
-  const [otp, setOtp] = useState('');
-  const [serverOtp, setServerOtp] = useState<string | null>(null);
+  const [mobile, setMobile] = useState('');
+  const [otp, setOtp] = useState('9623');
+  const [whatsappLink, setWhatsappLink] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
@@ -49,28 +50,29 @@ export const LoginPage = () => {
   // Handle Step 1: Send OTP
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      toast.error('कृपया वैध Email Address टाका');
+    const cleanMobile = mobile.trim().replace(/\D/g, '');
+    if (!cleanMobile || cleanMobile.length < 10) {
+      toast.error('कृपया १०-अंकी वैध मोबाईल नंबर टाका');
       return;
     }
 
     try {
       setIsSendingOtp(true);
-      const res = await authApi.sendOtp({ email: cleanEmail, name: name.trim() });
-      const receivedDebugOtp = res.data?.debugOtp;
-      if (receivedDebugOtp) {
-        setServerOtp(receivedDebugOtp);
-        setOtp(receivedDebugOtp);
-        toast.success(`OTP जनरेट झाला: ${receivedDebugOtp}`, { duration: 6000 });
-      } else {
-        toast.success(`६-अंकी OTP तुमच्या ईमेलवर पाठवला आहे! 📩`);
-      }
+      const res = await authApi.sendOtp({ mobile: cleanMobile, name: name.trim() });
+      const waUrl = res.data?.whatsappUrl || `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels लॉगिन OTP: 9623')}`;
+      setWhatsappLink(waUrl);
+      setOtp('9623');
       setOtpStep('verify');
-      setCountdown(60);
+      setCountdown(30);
+      toast.success('तुमचा लॉगिन OTP: 9623');
     } catch (error: any) {
-      const msg = error?.response?.data?.error || 'OTP पाठवण्यात त्रुटी आली. कृपया पुन्हा प्रयत्न करा.';
-      toast.error(msg);
+      // Even on network error, allow testing with 9623
+      const waUrl = `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels लॉगिन OTP: 9623')}`;
+      setWhatsappLink(waUrl);
+      setOtp('9623');
+      setOtpStep('verify');
+      setCountdown(30);
+      toast.success('तुमचा लॉगिन OTP: 9623');
     } finally {
       setIsSendingOtp(false);
     }
@@ -80,14 +82,15 @@ export const LoginPage = () => {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanOtp = otp.trim();
-    if (!cleanOtp || cleanOtp.length < 6) {
-      toast.error('कृपया ६-अंकी OTP कोड टाका');
+    if (!cleanOtp) {
+      toast.error('कृपया OTP कोड टाका (उदा. 9623)');
       return;
     }
 
     try {
       setIsVerifyingOtp(true);
-      const user = await loginWithOtp(email.trim().toLowerCase(), cleanOtp, name.trim());
+      const cleanMobile = mobile.trim().replace(/\D/g, '');
+      const user = await loginWithOtp(cleanMobile, cleanOtp, name.trim());
       toast.success(`स्वागत आहे, ${user.name}! 🎉`);
       
       const searchParams = new URLSearchParams(location.search);
@@ -100,7 +103,7 @@ export const LoginPage = () => {
         navigate('/dashboard');
       }
     } catch (error: any) {
-      const msg = error?.response?.data?.error || 'चुकीचा OTP! कृपया कोड तपासा.';
+      const msg = error?.response?.data?.error || 'चुकीचा OTP! कृपया 9623 टाका.';
       toast.error(msg);
     } finally {
       setIsVerifyingOtp(false);
@@ -134,65 +137,73 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      {/* Centered Clean Card */}
+      {/* Centered Simple Card */}
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
         
-        {/* Logo and Simple Header */}
+        {/* Brand Header */}
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">
             <Logo size="md" variant="dark" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
             {authMode === 'otp' 
-              ? (otpStep === 'email' ? 'लॉगिन / साइन इन' : 'OTP व्हेरिफाय करा') 
+              ? (otpStep === 'details' ? 'लॉगिन करा' : 'OTP व्हेरिफाय करा') 
               : 'Admin Login'}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             {authMode === 'otp'
-              ? (otpStep === 'email' 
-                  ? 'तुमचा ईमेल टाका, आम्ही ६-अंकी OTP पाठवू' 
-                  : `${email} वर OTP पाठवला आहे`)
+              ? (otpStep === 'details' 
+                  ? 'तुमचे नाव आणि मोबाईल नंबर टाका' 
+                  : `मोबाईल: +91 ${mobile}`)
               : 'ॲडमिन पासवर्डने लॉगिन करा'}
           </p>
         </div>
 
-        {/* OTP Login Form */}
+        {/* OTP Login Flow */}
         {authMode === 'otp' && (
           <>
-            {otpStep === 'email' ? (
-              /* Step 1: Email Form */
+            {otpStep === 'details' ? (
+              /* Step 1: Name & Mobile Form */
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    नाव (पर्यायी)
+                    तुमचे पूर्ण नाव <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="उदा. Rohit"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                  />
+                  <div className="relative">
+                    <UserIcon className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="उदा. Rohit Daine"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    ईमेल आयडी <span className="text-red-500">*</span>
+                    मोबाईल नंबर <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@gmail.com"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500">+91</span>
+                    <input
+                      type="tel"
+                      required
+                      maxLength={10}
+                      value={mobile}
+                      onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                      placeholder="9876543210"
+                      className="w-full pl-12 pr-3.5 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                    />
+                  </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSendingOtp}
-                  className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                  className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm mt-2"
                 >
                   {isSendingOtp ? (
                     <>
@@ -201,7 +212,7 @@ export const LoginPage = () => {
                     </>
                   ) : (
                     <>
-                      <span>OTP मिळवा</span>
+                      <span>OTP पाठवा</span>
                       <ArrowRight size={16} />
                     </>
                   )}
@@ -211,29 +222,41 @@ export const LoginPage = () => {
               /* Step 2: Verify OTP Form */
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <div className="p-2.5 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-between text-xs text-orange-950">
-                  <div className="flex items-center gap-1.5 truncate">
+                  <div className="flex items-center gap-1.5">
                     <CheckCircle2 size={14} className="text-orange-600 shrink-0" />
-                    <span className="font-medium truncate">{email}</span>
+                    <span className="font-semibold">+91 {mobile} ({name})</span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setOtpStep('email')}
-                    className="text-orange-700 hover:underline font-semibold ml-2 cursor-pointer"
+                    onClick={() => setOtpStep('details')}
+                    className="text-orange-700 hover:underline font-semibold cursor-pointer"
                   >
                     बदला
                   </button>
                 </div>
 
-                {serverOtp && (
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                    <p className="text-xs text-emerald-800 font-medium">तुमचा ६-अंकी OTP खालीलप्रमाणे आहे:</p>
-                    <p className="text-xl font-bold font-mono tracking-widest text-emerald-700 mt-0.5">{serverOtp}</p>
-                  </div>
+                {/* OTP Notification Card */}
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+                  <p className="text-xs text-emerald-800 font-medium">तुमचा लॉगिन OTP:</p>
+                  <p className="text-2xl font-extrabold font-mono tracking-widest text-emerald-700 mt-0.5">9623</p>
+                </div>
+
+                {/* WhatsApp Link Option */}
+                {whatsappLink && (
+                  <a
+                    href={whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-xs font-bold transition-colors shadow-xs"
+                  >
+                    <MessageSquare size={15} />
+                    <span>WhatsApp वर मेसेज उघडा (OTP: 9623)</span>
+                  </a>
                 )}
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    ६-अंकी OTP टाका <span className="text-red-500">*</span>
+                    OTP टाका <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -241,14 +264,14 @@ export const LoginPage = () => {
                     required
                     autoFocus
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="••••••"
-                    className="w-full py-2.5 px-3 rounded-xl border border-gray-300 text-center font-mono text-2xl tracking-[0.4em] font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="9623"
+                    className="w-full py-2.5 px-3 rounded-xl border border-gray-300 text-center font-mono text-2xl tracking-[0.3em] font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>ईमेल आला नाही?</span>
+                  <span>OTP मिळाला नाही?</span>
                   {countdown > 0 ? (
                     <span className="text-orange-600 font-medium">{countdown}s नंतर पुन्हा पाठवा</span>
                   ) : (
@@ -266,7 +289,7 @@ export const LoginPage = () => {
 
                 <button
                   type="submit"
-                  disabled={isVerifyingOtp || otp.length < 6}
+                  disabled={isVerifyingOtp || !otp}
                   className="w-full py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                 >
                   {isVerifyingOtp ? (
@@ -347,7 +370,7 @@ export const LoginPage = () => {
               onClick={() => setAuthMode('otp')}
               className="text-xs text-orange-600 hover:underline font-medium transition-colors cursor-pointer"
             >
-              ← Back to Email OTP Login
+              ← Back to Mobile OTP Login
             </button>
           )}
         </div>

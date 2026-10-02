@@ -11,36 +11,39 @@ const router = Router();
 // POST /api/auth/send-otp
 router.post('/send-otp', async (req, res: Response) => {
   try {
-    const { email, name } = req.body;
-    const cleanEmail = (email || '').trim().toLowerCase();
+    const { email, mobile, name } = req.body;
+    const cleanMobile = (mobile || '').toString().trim().replace(/\D/g, '').slice(-10);
+    const cleanEmail = email ? email.trim().toLowerCase() : (cleanMobile ? `${cleanMobile}@omsaikrupa.com` : '');
 
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      return res.status(400).json({ error: 'Valid email address is required' });
+    if (!cleanMobile && !cleanEmail) {
+      return res.status(400).json({ error: 'Mobile number or email is required' });
     }
 
-    // Generate 6-digit numeric OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    // Hardcoded OTP: 9623
+    const otp = '9623';
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
-    // Delete older OTPs for this email
-    await db.prepare('DELETE FROM otps WHERE email = ?').run(cleanEmail);
+    // Save to DB
+    if (cleanEmail) {
+      await db.prepare('DELETE FROM otps WHERE email = ?').run(cleanEmail);
+      await db.prepare('INSERT INTO otps (id, email, otp, expiresAt) VALUES (?, ?, ?, ?)').run(
+        uuidv4(),
+        cleanEmail,
+        otp,
+        expiresAt
+      );
+      try {
+        await sendOtpEmail(cleanEmail, otp, name || 'Customer');
+      } catch (e) {}
+    }
 
-    // Save new OTP
-    await db.prepare('INSERT INTO otps (id, email, otp, expiresAt) VALUES (?, ?, ?, ?)').run(
-      uuidv4(),
-      cleanEmail,
-      otp,
-      expiresAt
-    );
-
-    // Send email
-    await sendOtpEmail(cleanEmail, otp, name || 'Customer');
-
-    const isSmtpReady = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+    const whatsappMessage = encodeURIComponent(`Om Sai Travels — आपला लॉगिन OTP: 9623`);
+    const whatsappUrl = cleanMobile ? `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${whatsappMessage}` : '';
 
     return res.json({ 
-      message: 'OTP sent successfully to ' + cleanEmail,
-      debugOtp: !isSmtpReady ? otp : undefined
+      message: 'OTP sent successfully',
+      otp: '9623',
+      whatsappUrl
     });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
@@ -50,37 +53,55 @@ router.post('/send-otp', async (req, res: Response) => {
 // POST /api/auth/verify-otp
 router.post('/verify-otp', async (req, res: Response) => {
   try {
-    const { email, otp, name } = req.body;
-    const cleanEmail = (email || '').trim().toLowerCase();
-    const cleanOtp = (otp || '').trim();
+    const { email, mobile, otp, name } = req.body;
+    const cleanOtp = (otp || '').toString().trim();
+    const cleanMobile = (mobile || '').toString().trim().replace(/\D/g, '').slice(-10);
+    const cleanEmail = email ? email.trim().toLowerCase() : (cleanMobile ? `${cleanMobile}@omsaikrupa.com` : '');
 
-    if (!cleanEmail || !cleanOtp) {
-      return res.status(400).json({ error: 'Email and OTP are required' });
+    if (!cleanOtp) {
+      return res.status(400).json({ error: 'OTP code is required' });
     }
 
-    // Verify OTP
-    const record = (await db.prepare('SELECT * FROM otps WHERE email = ? AND otp = ? ORDER BY createdAt DESC LIMIT 1').get(cleanEmail, cleanOtp)) as any;
-    if (!record) {
-      return res.status(400).json({ error: 'Invalid OTP. Please check the code and try again.' });
+    // Hardcoded 9623 is ALWAYS valid
+    const isHardcodedValid = cleanOtp === '9623';
+    let isDbValid = false;
+
+    if (!isHardcodedValid && cleanEmail) {
+      const record = (await db.prepare('SELECT * FROM otps WHERE email = ? AND otp = ? ORDER BY createdAt DESC LIMIT 1').get(cleanEmail, cleanOtp)) as any;
+      if (record && new Date(record.expiresAt).getTime() >= Date.now()) {
+        isDbValid = true;
+      }
     }
 
-    if (new Date(record.expiresAt).getTime() < Date.now()) {
-      return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
+    if (!isHardcodedValid && !isDbValid) {
+      return res.status(400).json({ error: 'चुकीचा OTP! कृपया 9623 टाका.' });
     }
 
     // Clear used OTP
-    await db.prepare('DELETE FROM otps WHERE email = ?').run(cleanEmail);
+    if (cleanEmail) {
+      await db.prepare('DELETE FROM otps WHERE email = ?').run(cleanEmail);
+    }
 
-    // Check if user exists or auto-create
-    let user = (await db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail)) as any;
+    // Check if user exists by mobile or email
+    let user: any = null;
+    if (cleanMobile) {
+      user = (await db.prepare('SELECT * FROM users WHERE mobile = ?').get(cleanMobile)) as any;
+    }
+    if (!user && cleanEmail) {
+      user = (await db.prepare('SELECT * FROM users WHERE email = ?').get(cleanEmail)) as any;
+    }
+
     if (!user) {
       const id = uuidv4();
-      const userName = name || cleanEmail.split('@')[0];
+      const userName = name || (cleanMobile ? `User ${cleanMobile.slice(-4)}` : cleanEmail.split('@')[0]);
+      const userEmail = cleanEmail || `${cleanMobile || id.slice(0,8)}@omsaikrupa.com`;
+      const userMobile = cleanMobile || '9999999999';
+
       await db.prepare('INSERT INTO users (id, name, email, mobile, passwordHash, role, status) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
         id,
         userName,
-        cleanEmail,
-        '',
+        userEmail,
+        userMobile,
         '',
         'USER',
         'ACTIVE'
@@ -95,7 +116,7 @@ router.post('/verify-otp', async (req, res: Response) => {
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || 'secret',
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
 
     const { passwordHash, ...safeUser } = user;

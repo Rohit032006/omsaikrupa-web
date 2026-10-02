@@ -18,7 +18,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (emailOrMobile: string, password: string) => Promise<User>;
-  loginWithOtp: (email: string, otp: string, name?: string) => Promise<User>;
+  loginWithOtp: (identifier: string, otp: string, name?: string) => Promise<User>;
   register: (data: any) => Promise<User>;
   logout: () => void;
   updateUser: (user: User) => void;
@@ -46,10 +46,14 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      loginWithOtp: async (email: string, otp: string, name?: string) => {
+      loginWithOtp: async (identifier: string, otp: string, name?: string) => {
         set({ isLoading: true });
         try {
-          const res = await authApi.verifyOtp({ email, otp, name });
+          const isEmail = identifier.includes('@');
+          const payload = isEmail
+            ? { email: identifier, otp, name }
+            : { mobile: identifier, otp, name };
+          const res = await authApi.verifyOtp(payload);
           const { token, user } = res.data;
           localStorage.setItem('osk_token', token);
           set({ user, token, isAuthenticated: true, isLoading: false });

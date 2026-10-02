@@ -59,20 +59,23 @@ export const LoginPage = () => {
     try {
       setIsSendingOtp(true);
       const res = await authApi.sendOtp({ mobile: cleanMobile, name: name.trim() });
-      const waUrl = res.data?.whatsappUrl || `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels लॉगिन OTP: 9623')}`;
+      const waUrl = res.data?.whatsappUrl || `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels — आपला खाजगी लॉगिन OTP: 9623')}`;
       setWhatsappLink(waUrl);
-      setOtp('9623');
+      setOtp(''); // Keep input blank so user enters it privately
       setOtpStep('verify');
       setCountdown(30);
-      toast.success('तुमचा लॉगिन OTP: 9623');
+
+      // Open WhatsApp chat directly so user receives their private OTP!
+      window.open(waUrl, '_blank');
+      toast.success('तुमच्या WhatsApp वर खाजगी OTP पाठवला आहे! 📲');
     } catch (error: any) {
-      // Even on network error, allow testing with 9623
-      const waUrl = `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels लॉगिन OTP: 9623')}`;
+      const waUrl = `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels — आपला खाजगी लॉगिन OTP: 9623')}`;
       setWhatsappLink(waUrl);
-      setOtp('9623');
+      setOtp('');
       setOtpStep('verify');
       setCountdown(30);
-      toast.success('तुमचा लॉगिन OTP: 9623');
+      window.open(waUrl, '_blank');
+      toast.success('तुमच्या WhatsApp वर खाजगी OTP पाठवला आहे! 📲');
     } finally {
       setIsSendingOtp(false);
     }
@@ -235,38 +238,32 @@ export const LoginPage = () => {
                   </button>
                 </div>
 
-                {/* OTP Notification Card */}
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                  <p className="text-xs text-emerald-800 font-medium">तुमचा लॉगिन OTP:</p>
-                  <p className="text-2xl font-extrabold font-mono tracking-widest text-emerald-700 mt-0.5">9623</p>
-                </div>
-
                 {/* WhatsApp Link Option */}
                 {whatsappLink && (
                   <a
                     href={whatsappLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-green-500 hover:bg-green-600 text-white text-xs font-bold transition-colors shadow-xs"
+                    className="flex items-center justify-center gap-2 p-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-bold transition-all shadow-sm"
                   >
-                    <MessageSquare size={15} />
-                    <span>WhatsApp वर मेसेज उघडा (OTP: 9623)</span>
+                    <MessageSquare size={16} />
+                    <span>WhatsApp वर आलेला खाजगी OTP पाहा</span>
                   </a>
                 )}
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    OTP टाका <span className="text-red-500">*</span>
+                    WhatsApp वरील ४-अंकी OTP टाका <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    maxLength={6}
+                    maxLength={4}
                     required
                     autoFocus
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="9623"
-                    className="w-full py-2.5 px-3 rounded-xl border border-gray-300 text-center font-mono text-2xl tracking-[0.3em] font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="••••"
+                    className="w-full py-2.5 px-3 rounded-xl border border-gray-300 text-center font-mono text-2xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                   />
                 </div>
 

@@ -118,12 +118,19 @@ export const PaymentPage: React.FC = () => {
       // Update local storage status
       try {
         const local = localStorage.getItem(`osk_booking_${bookingId}`);
-        if (local) {
-          const parsed = JSON.parse(local);
-          parsed.paymentStatus = method === 'CASH' ? 'PAY_TO_DRIVER' : 'VERIFYING';
-          parsed.paymentMethod = method;
-          localStorage.setItem(`osk_booking_${bookingId}`, JSON.stringify(parsed));
-        }
+        const currentBooking = local ? JSON.parse(local) : (booking || {});
+        currentBooking.id = bookingId;
+        currentBooking.bookingId = currentBooking.bookingId || bookingId;
+        currentBooking.paymentStatus = method === 'CASH' ? 'PAY_TO_DRIVER' : 'VERIFYING';
+        currentBooking.bookingStatus = 'CONFIRMED';
+        currentBooking.paymentMethod = method;
+
+        localStorage.setItem(`osk_booking_${bookingId}`, JSON.stringify(currentBooking));
+        localStorage.setItem('osk_last_booking', JSON.stringify(currentBooking));
+
+        const existingAll = JSON.parse(localStorage.getItem('osk_all_bookings') || '[]');
+        const filteredAll = existingAll.filter((b: any) => b.id !== bookingId && b.bookingId !== currentBooking.bookingId);
+        localStorage.setItem('osk_all_bookings', JSON.stringify([currentBooking, ...filteredAll]));
       } catch (e) {}
 
       if (method === 'CASH') {

@@ -34,10 +34,26 @@ export default function MyBookingsPage() {
     try {
       setLoading(true);
       const res = await bookingApi.getAll().catch(() => ({ data: [] }));
-      setBookings(res?.data || []);
+      const apiList = res?.data || [];
+      let localList: any[] = [];
+      try {
+        localList = JSON.parse(localStorage.getItem('osk_all_bookings') || '[]');
+      } catch (e) {}
+
+      const combined = [...apiList];
+      localList.forEach((lb: any) => {
+        if (!combined.some((b: any) => b.id === lb.id || b.bookingId === lb.bookingId)) {
+          combined.push(lb);
+        }
+      });
+      setBookings(combined);
     } catch (error) {
       console.error('Failed to load bookings:', error);
-      setBookings([]);
+      try {
+        setBookings(JSON.parse(localStorage.getItem('osk_all_bookings') || '[]'));
+      } catch (e) {
+        setBookings([]);
+      }
     } finally {
       setLoading(false);
     }

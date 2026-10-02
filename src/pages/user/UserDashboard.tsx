@@ -51,8 +51,21 @@ export default function UserDashboard() {
           bookingApi.getAll().catch(() => ({ data: [] })),
           notificationApi.getAll().catch(() => ({ data: [] }))
         ]);
+        const apiBookings = bookingsRes?.data || [];
+        let localBookings: any[] = [];
+        try {
+          localBookings = JSON.parse(localStorage.getItem('osk_all_bookings') || '[]');
+        } catch (e) {}
+
+        const mergedBookings = [...apiBookings];
+        localBookings.forEach((lb: any) => {
+          if (!mergedBookings.some((b: any) => b.id === lb.id || b.bookingId === lb.bookingId)) {
+            mergedBookings.push(lb);
+          }
+        });
+
         if (isMounted) {
-          setBookings(bookingsRes?.data || []);
+          setBookings(mergedBookings);
           setNotifications(notifsRes?.data || []);
         }
       } catch (error) {

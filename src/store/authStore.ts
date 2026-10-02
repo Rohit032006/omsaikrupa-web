@@ -17,6 +17,9 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isLoginModalOpen: boolean;
+  openLoginModal: () => void;
+  closeLoginModal: () => void;
   login: (emailOrMobile: string, password: string) => Promise<User>;
   loginWithOtp: (identifier: string, otp: string, name?: string) => Promise<User>;
   register: (data: any) => Promise<User>;
@@ -31,6 +34,10 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       isLoading: false,
+      isLoginModalOpen: false,
+
+      openLoginModal: () => set({ isLoginModalOpen: true }),
+      closeLoginModal: () => set({ isLoginModalOpen: false }),
 
       login: async (emailOrMobile: string, password: string) => {
         set({ isLoading: true });

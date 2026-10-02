@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { PublicLayout } from './components/Layout/PublicLayout';
 import { UserLayout } from './components/Layout/UserLayout';
 import { AdminLayout } from './components/Layout/AdminLayout';
+import { LoginModal } from './components/LoginModal';
 import { useAuthStore } from './store/authStore';
 
 // Public pages
@@ -69,6 +70,7 @@ function App() {
           success: { iconTheme: { primary: '#ea580c', secondary: '#fff' } },
         }}
       />
+      <LoginModal />
       <Suspense fallback={<LoadingFallback />}>
         <Routes>
           {/* Public Routes */}

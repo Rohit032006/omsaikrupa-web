@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { Logo } from '../Logo';
+import { useAuthStore } from '../../store/authStore';
 
 export const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { isAuthenticated, user, openLoginModal } = useAuthStore();
 
   const links = [
     { name: 'Home', path: '/' },
@@ -44,19 +46,22 @@ export const Navbar: React.FC = () => {
                 </Link>
               ))}
             </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/login"
-                className="text-sm font-medium text-gray-700 hover:text-gray-900"
-              >
-                Log in
-              </Link>
-              <Link
-                to="/register"
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Sign up
-              </Link>
+            <div className="flex items-center space-x-3">
+              {isAuthenticated ? (
+                <Link
+                  to={user?.role === 'ADMIN' ? '/admin' : '/dashboard'}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm"
+                >
+                  My Dashboard
+                </Link>
+              ) : (
+                <button
+                  onClick={openLoginModal}
+                  className="bg-orange-600 hover:bg-orange-700 text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm cursor-pointer"
+                >
+                  Log in
+                </button>
+              )}
             </div>
           </div>
 
@@ -91,20 +96,25 @@ export const Navbar: React.FC = () => {
               </Link>
             ))}
             <div className="mt-4 border-t border-gray-200 pt-4 px-3 space-y-2">
-              <Link
-                to="/login"
-                className="block w-full text-center text-gray-700 font-medium py-2"
-                onClick={() => setIsOpen(false)}
-              >
-                Log in
-              </Link>
-              <Link
-                to="/register"
-                className="block w-full text-center bg-orange-600 text-white font-medium py-2 rounded-md"
-                onClick={() => setIsOpen(false)}
-              >
-                Sign up
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to={user?.role === 'ADMIN' ? '/admin' : '/dashboard'}
+                  className="block w-full text-center bg-orange-600 text-white font-semibold py-2.5 rounded-xl text-sm"
+                  onClick={() => setIsOpen(false)}
+                >
+                  My Dashboard
+                </Link>
+              ) : (
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    openLoginModal();
+                  }}
+                  className="block w-full text-center bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                >
+                  Log in
+                </button>
+              )}
             </div>
           </div>
         </div>

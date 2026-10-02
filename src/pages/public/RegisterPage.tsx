@@ -19,16 +19,16 @@ import { useAuthStore } from '../../store/authStore';
 import { Logo } from '../../components/Logo';
 
 const registerSchema = z.object({
-  name: z.string().min(2, 'Full name कमीत कमी 2 characters असावे'),
-  mobile: z.string().regex(/^[6-9]\d{9}$/, 'Valid 10-digit Indian mobile number टाका'),
-  email: z.string().email('Valid email address टाका'),
+  name: z.string().min(2, 'Full name must be at least 2 characters'),
+  mobile: z.string().regex(/^[6-9]\d{9}$/, 'Please enter a valid 10-digit mobile number'),
+  email: z.string().email('Please enter a valid email address'),
   password: z.string()
-    .min(8, 'Password कमीत कमी 8 characters असावा')
-    .regex(/[A-Z]/, 'एक capital letter असणे आवश्यक')
-    .regex(/[0-9]/, 'एक number असणे आवश्यक'),
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Must contain at least one number'),
   confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords match होत नाहीत",
+  message: "Passwords do not match",
   path: ['confirmPassword'],
 });
 

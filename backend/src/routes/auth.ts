@@ -37,7 +37,7 @@ router.post('/send-otp', async (req, res: Response) => {
       } catch (e) {}
     }
 
-    const whatsappMessage = encodeURIComponent(`Om Sai Travels — आपला लॉगिन OTP: 9623`);
+    const whatsappMessage = encodeURIComponent(`Om Sai Travels — Your login OTP is: 9623`);
     const whatsappUrl = cleanMobile ? `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${whatsappMessage}` : '';
 
     return res.json({ 
@@ -74,7 +74,7 @@ router.post('/verify-otp', async (req, res: Response) => {
     }
 
     if (!isHardcodedValid && !isDbValid) {
-      return res.status(400).json({ error: 'चुकीचा OTP! कृपया 9623 टाका.' });
+      return res.status(400).json({ error: 'Invalid OTP code. Please enter 9623.' });
     }
 
     // Clear used OTP

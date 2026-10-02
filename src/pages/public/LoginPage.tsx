@@ -27,7 +27,7 @@ export const LoginPage = () => {
   const [otpStep, setOtpStep] = useState<'details' | 'verify'>('details');
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState('9623');
+  const [otp, setOtp] = useState('');
   const [whatsappLink, setWhatsappLink] = useState('');
   const [countdown, setCountdown] = useState(0);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
@@ -52,30 +52,30 @@ export const LoginPage = () => {
     e.preventDefault();
     const cleanMobile = mobile.trim().replace(/\D/g, '');
     if (!cleanMobile || cleanMobile.length < 10) {
-      toast.error('कृपया १०-अंकी वैध मोबाईल नंबर टाका');
+      toast.error('Please enter a valid 10-digit mobile number');
       return;
     }
 
     try {
       setIsSendingOtp(true);
       const res = await authApi.sendOtp({ mobile: cleanMobile, name: name.trim() });
-      const waUrl = res.data?.whatsappUrl || `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels — आपला खाजगी लॉगिन OTP: 9623')}`;
+      const waUrl = res.data?.whatsappUrl || `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels — Your private login OTP: 9623')}`;
       setWhatsappLink(waUrl);
-      setOtp(''); // Keep input blank so user enters it privately
+      setOtp('');
       setOtpStep('verify');
       setCountdown(30);
 
-      // Open WhatsApp chat directly so user receives their private OTP!
+      // Open WhatsApp chat directly so user receives private OTP
       window.open(waUrl, '_blank');
-      toast.success('तुमच्या WhatsApp वर खाजगी OTP पाठवला आहे! 📲');
+      toast.success('Private OTP sent to your WhatsApp! 📲');
     } catch (error: any) {
-      const waUrl = `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels — आपला खाजगी लॉगिन OTP: 9623')}`;
+      const waUrl = `https://api.whatsapp.com/send?phone=91${cleanMobile}&text=${encodeURIComponent('Om Sai Travels — Your private login OTP: 9623')}`;
       setWhatsappLink(waUrl);
       setOtp('');
       setOtpStep('verify');
       setCountdown(30);
       window.open(waUrl, '_blank');
-      toast.success('तुमच्या WhatsApp वर खाजगी OTP पाठवला आहे! 📲');
+      toast.success('Private OTP sent to your WhatsApp! 📲');
     } finally {
       setIsSendingOtp(false);
     }
@@ -86,7 +86,7 @@ export const LoginPage = () => {
     e.preventDefault();
     const cleanOtp = otp.trim();
     if (!cleanOtp) {
-      toast.error('कृपया OTP कोड टाका (उदा. 9623)');
+      toast.error('Please enter the OTP code (e.g. 9623)');
       return;
     }
 
@@ -94,7 +94,7 @@ export const LoginPage = () => {
       setIsVerifyingOtp(true);
       const cleanMobile = mobile.trim().replace(/\D/g, '');
       const user = await loginWithOtp(cleanMobile, cleanOtp, name.trim());
-      toast.success(`स्वागत आहे, ${user.name}! 🎉`);
+      toast.success(`Welcome, ${user.name}! 🎉`);
       
       const searchParams = new URLSearchParams(location.search);
       const redirect = searchParams.get('redirect');
@@ -106,7 +106,7 @@ export const LoginPage = () => {
         navigate('/dashboard');
       }
     } catch (error: any) {
-      const msg = error?.response?.data?.error || 'चुकीचा OTP! कृपया 9623 टाका.';
+      const msg = error?.response?.data?.error || 'Invalid OTP code. Please enter 9623.';
       toast.error(msg);
     } finally {
       setIsVerifyingOtp(false);
@@ -117,21 +117,21 @@ export const LoginPage = () => {
   const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordEmail || !password) {
-      toast.error('Email आणि Password आवश्यक आहेत');
+      toast.error('Email and password are required');
       return;
     }
 
     try {
       setIsLoggingInPassword(true);
       const user = await login(passwordEmail.trim(), password);
-      toast.success(`स्वागत आहे, ${user.name}!`);
+      toast.success(`Welcome, ${user.name}!`);
       if (user.role === 'ADMIN') {
         navigate('/admin');
       } else {
         navigate('/dashboard');
       }
     } catch (error: any) {
-      const msg = error?.response?.data?.error || 'चुकीचा Email किंवा Password';
+      const msg = error?.response?.data?.error || 'Invalid email or password';
       toast.error(msg);
     } finally {
       setIsLoggingInPassword(false);
@@ -140,7 +140,7 @@ export const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-      {/* Centered Simple Card */}
+      {/* Centered Clean Card */}
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
         
         {/* Brand Header */}
@@ -150,15 +150,15 @@ export const LoginPage = () => {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
             {authMode === 'otp' 
-              ? (otpStep === 'details' ? 'लॉगिन करा' : 'OTP व्हेरिफाय करा') 
-              : 'Admin Login'}
+              ? (otpStep === 'details' ? 'Sign In' : 'Verify OTP') 
+              : 'Administrator Login'}
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             {authMode === 'otp'
               ? (otpStep === 'details' 
-                  ? 'तुमचे नाव आणि मोबाईल नंबर टाका' 
-                  : `मोबाईल: +91 ${mobile}`)
-              : 'ॲडमिन पासवर्डने लॉगिन करा'}
+                  ? 'Enter your name and mobile number to continue' 
+                  : `Code sent to +91 ${mobile}`)
+              : 'Sign in with your admin credentials'}
           </p>
         </div>
 
@@ -166,11 +166,11 @@ export const LoginPage = () => {
         {authMode === 'otp' && (
           <>
             {otpStep === 'details' ? (
-              /* Step 1: Name & Mobile Form */
+              /* Step 1: Details Form */
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    तुमचे पूर्ण नाव <span className="text-red-500">*</span>
+                    Full Name <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <UserIcon className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -179,7 +179,7 @@ export const LoginPage = () => {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="उदा. Rohit Daine"
+                      placeholder="e.g. Rohit Sharma"
                       className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                     />
                   </div>
@@ -187,7 +187,7 @@ export const LoginPage = () => {
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    मोबाईल नंबर <span className="text-red-500">*</span>
+                    Mobile Number <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-500">+91</span>
@@ -211,18 +211,18 @@ export const LoginPage = () => {
                   {isSendingOtp ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>OTP पाठवत आहे...</span>
+                      <span>Sending OTP...</span>
                     </>
                   ) : (
                     <>
-                      <span>OTP पाठवा</span>
+                      <span>Send OTP</span>
                       <ArrowRight size={16} />
                     </>
                   )}
                 </button>
               </form>
             ) : (
-              /* Step 2: Verify OTP Form */
+              /* Step 2: Verify Form */
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <div className="p-2.5 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-between text-xs text-orange-950">
                   <div className="flex items-center gap-1.5">
@@ -234,7 +234,7 @@ export const LoginPage = () => {
                     onClick={() => setOtpStep('details')}
                     className="text-orange-700 hover:underline font-semibold cursor-pointer"
                   >
-                    बदला
+                    Change
                   </button>
                 </div>
 
@@ -247,13 +247,13 @@ export const LoginPage = () => {
                     className="flex items-center justify-center gap-2 p-3 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-bold transition-all shadow-sm"
                   >
                     <MessageSquare size={16} />
-                    <span>WhatsApp वर आलेला खाजगी OTP पाहा</span>
+                    <span>View Private OTP on WhatsApp</span>
                   </a>
                 )}
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    WhatsApp वरील ४-अंकी OTP टाका <span className="text-red-500">*</span>
+                    Enter 4-Digit OTP <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -268,9 +268,9 @@ export const LoginPage = () => {
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>OTP मिळाला नाही?</span>
+                  <span>Didn't receive OTP?</span>
                   {countdown > 0 ? (
-                    <span className="text-orange-600 font-medium">{countdown}s नंतर पुन्हा पाठवा</span>
+                    <span className="text-orange-600 font-medium">Resend in {countdown}s</span>
                   ) : (
                     <button
                       type="button"
@@ -292,11 +292,11 @@ export const LoginPage = () => {
                   {isVerifyingOtp ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>तपासत आहे...</span>
+                      <span>Verifying...</span>
                     </>
                   ) : (
                     <>
-                      <span>लॉगिन करा</span>
+                      <span>Sign In</span>
                       <ArrowRight size={16} />
                     </>
                   )}

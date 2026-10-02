@@ -65,17 +65,17 @@ export async function sendOtpEmail(toEmail: string, otp: string, recipientName: 
           <div class="sub-text">Vehicle Booking & Airport Transfers</div>
         </div>
         <div class="body">
-          <div class="greeting">नमस्कार, ${recipientName}!</div>
+          <div class="greeting">Hello, ${recipientName}!</div>
           <div class="text">
-            <strong>Om Sai Travels</strong> मध्ये लॉगिन / व्हेरिफिकेशन करण्यासाठी तुमचा ६-अंकी OTP खालीलप्रमाणे आहे:
+            Your verification OTP code for <strong>Om Sai Travels</strong> login is:
           </div>
           <div class="otp-box">
             <div class="otp-label">Your One-Time Password</div>
             <div class="otp-code">${otp}</div>
-            <div class="expiry-text">⚠️ हा OTP पुढील १० मिनिटांसाठी वैध आहे. हा कोड कोणाशीही शेअर करू नका.</div>
+            <div class="expiry-text">⚠️ This OTP is valid for 10 minutes. Do not share this code with anyone.</div>
           </div>
           <div class="text" style="font-size: 14px; color: #6b7280;">
-            जर तुम्ही हा OTP मागितला नसेल, तर कृपया या ईमेलकडे दुर्लक्ष करा.
+            If you did not request this OTP, please ignore this email.
           </div>
         </div>
         <div class="footer">
@@ -91,7 +91,7 @@ export async function sendOtpEmail(toEmail: string, otp: string, recipientName: 
     await transport.sendMail({
       from: `"Om Sai Travels" <${process.env.EMAIL_USER}>`,
       to: toEmail,
-      subject: `🔑 ${otp} — तुमचा Om Sai Travels लॉगिन OTP`,
+      subject: `🔑 ${otp} — Your Om Sai Travels Verification Code`,
       html: htmlContent,
     });
     console.log(`✅ [Email Service] Real OTP email successfully delivered to ${toEmail}`);

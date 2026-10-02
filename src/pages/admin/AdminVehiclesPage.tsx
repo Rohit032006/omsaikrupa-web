@@ -275,7 +275,7 @@ const AdminVehiclesPage = () => {
                     type="text"
                     value={pickupLocation}
                     onChange={(e) => setPickupLocation(e.target.value)}
-                    placeholder="उदा. Pune Airport / Swargate"
+                    placeholder="e.g. Pune Airport / Swargate"
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
                   />
@@ -286,7 +286,7 @@ const AdminVehiclesPage = () => {
                     type="text"
                     value={dropLocation}
                     onChange={(e) => setDropLocation(e.target.value)}
-                    placeholder="उदा. Mumbai Airport / Shirdi"
+                    placeholder="e.g. Mumbai Airport / Shirdi"
                     className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
                   />

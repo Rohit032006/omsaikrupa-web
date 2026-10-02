@@ -36,7 +36,12 @@ router.post('/send-otp', async (req, res: Response) => {
     // Send email
     await sendOtpEmail(cleanEmail, otp, name || 'Customer');
 
-    return res.json({ message: 'OTP sent successfully to ' + cleanEmail });
+    const isSmtpReady = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+
+    return res.json({ 
+      message: 'OTP sent successfully to ' + cleanEmail,
+      debugOtp: !isSmtpReady ? otp : undefined
+    });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }

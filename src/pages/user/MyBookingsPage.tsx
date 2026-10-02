@@ -33,11 +33,11 @@ export default function MyBookingsPage() {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const res = await bookingApi.getAll();
-      setBookings(res.data || []);
+      const res = await bookingApi.getAll().catch(() => ({ data: [] }));
+      setBookings(res?.data || []);
     } catch (error) {
       console.error('Failed to load bookings:', error);
-      toast.error('Failed to load bookings');
+      setBookings([]);
     } finally {
       setLoading(false);
     }

@@ -12,7 +12,7 @@ export default function UserPaymentsPage() {
     const fetchUserPayments = async () => {
       try {
         setLoading(true);
-        const res = await bookingApi.getAll();
+        const res = await bookingApi.getAll().catch(() => ({ data: [] }));
         const allBookings = res.data || [];
         // Extract all payments from user's bookings
         const extracted: any[] = [];

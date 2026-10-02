@@ -43,23 +43,29 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchData = async () => {
       setLoading(true);
       try {
         const [bookingsRes, notifsRes] = await Promise.all([
-          bookingApi.getAll(),
+          bookingApi.getAll().catch(() => ({ data: [] })),
           notificationApi.getAll().catch(() => ({ data: [] }))
         ]);
-        setBookings(bookingsRes.data || []);
-        setNotifications(notifsRes.data || []);
+        if (isMounted) {
+          setBookings(bookingsRes?.data || []);
+          setNotifications(notifsRes?.data || []);
+        }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
+    return () => { isMounted = false; };
   }, []);
 
   const totalBookings = bookings.length;

@@ -14,10 +14,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Gracefully handle error without forcing browser reload loops
     if (error.response?.status === 401) {
-      localStorage.removeItem('osk_token');
-      localStorage.removeItem('osk_user');
-      window.location.href = '/login';
+      console.warn('Unauthorized request:', error.config?.url);
     }
     return Promise.reject(error);
   }
